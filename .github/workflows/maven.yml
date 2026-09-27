@@ -8,8 +8,12 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+
+    # IMPORTANTE: Informa ao GitHub que todos os comandos devem rodar dentro da pasta do backend
+    defaults:
+      run:
+        working-directory: Backend/escola.agendamento
 
     steps:
     - uses: actions/checkout@v4
@@ -20,15 +24,15 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: maven
+        cache-dependency-path: Backend/escola.agendamento/pom.xml
 
-    # Libera o Maven Wrapper para rodar no Linux da nuvem
     - name: Grant execute permission for mvnw
       run: chmod +x mvnw
 
-    # Roda o seu comando exato de aceite
     - name: Build with Maven Wrapper
       run: ./mvnw clean install
 
-    # Opcional (envia dados de dependências para o GitHub)
     - name: Update dependency graph
       uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
+      with:
+        path: Backend/escola.agendamento
