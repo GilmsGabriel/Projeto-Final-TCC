@@ -1,7 +1,6 @@
 package br.edu.escola.agendamento.entity;
 
 import br.edu.escola.agendamento.enums.PerfilUsuario;
-import br.edu.escola.agendamento.entity.Agendamento;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -35,12 +34,8 @@ public class Usuario {
     @Column(updatable = false)
     private LocalDateTime dataCriacao;
 
-    @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY)
-    private List<Agendamento> agendamentos;
-
-
     public Usuario(Long id, String nomeCompleto, String email, String senha, PerfilUsuario perfil,
-                   boolean ativo, LocalDateTime dataCriacao, List<Agendamento> agendamentos) {
+                   boolean ativo, LocalDateTime dataCriacao) {
         this.id = id;
         this.nomeCompleto = nomeCompleto;
         this.email = email;
@@ -48,7 +43,6 @@ public class Usuario {
         this.perfil = perfil;
         this.ativo = ativo;
         this.dataCriacao = dataCriacao;
-        this.agendamentos = agendamentos;
     }
 
     //Getetrs e Setters
@@ -108,12 +102,5 @@ public class Usuario {
         this.dataCriacao = dataCriacao;
     }
 
-    public List<Agendamento> getAgendamentos() {
-        return agendamentos;
-    }
-
-    public void setAgendamentos(List<Agendamento> agendamentos) {
-        this.agendamentos = agendamentos;
-    }
 }
 
