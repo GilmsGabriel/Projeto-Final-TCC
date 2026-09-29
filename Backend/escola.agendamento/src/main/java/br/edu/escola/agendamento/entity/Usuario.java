@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "usuarios")
@@ -34,8 +35,11 @@ public class Usuario {
     @Column(updatable = false)
     private LocalDateTime dataCriacao;
 
-    public Usuario(Long id, String nomeCompleto, String email, String senha, PerfilUsuario perfil,
-                   boolean ativo, LocalDateTime dataCriacao) {
+    @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY)
+    private List<Agendamento> agendamentos;
+
+    public Usuario(Long id, String nomeCompleto, String email, String senha, PerfilUsuario perfil, boolean ativo,
+                   LocalDateTime dataCriacao, List<Agendamento> agendamentos) {
         this.id = id;
         this.nomeCompleto = nomeCompleto;
         this.email = email;
@@ -43,9 +47,10 @@ public class Usuario {
         this.perfil = perfil;
         this.ativo = ativo;
         this.dataCriacao = dataCriacao;
+        this.agendamentos = agendamentos;
     }
 
-    //Getetrs e Setters
+    //Getters e Setters
     public Long getId() {
         return id;
     }
@@ -102,5 +107,12 @@ public class Usuario {
         this.dataCriacao = dataCriacao;
     }
 
+    public List<Agendamento> getAgendamentos() {
+        return agendamentos;
+    }
+
+    public void setAgendamentos(List<Agendamento> agendamentos) {
+        this.agendamentos = agendamentos;
+    }
 }
 
