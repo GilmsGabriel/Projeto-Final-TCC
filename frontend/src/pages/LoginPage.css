@@ -32,7 +32,8 @@
 }
 
 .login-form input:focus-visible,
-.login-form button:focus-visible {
+.login-form button:focus-visible,
+.login-form a:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -62,6 +63,15 @@
   color: #b42318;
 }
 
+.login-success {
+  color: #0f5132;
+}
+
+.login-form a {
+  color: var(--text-h);
+  text-underline-offset: 3px;
+}
+
 @media (prefers-color-scheme: dark) {
   .login-form button {
     background: var(--accent);
@@ -70,5 +80,9 @@
 
   .login-error {
     color: #ffaaa3;
+  }
+
+  .login-success {
+    color: #91d5b0;
   }
 }
