@@ -1,70 +1,26 @@
-package br.edu.escola.agendamento.entity;
+package br.edu.escola.agendamento.dto;
 
 import br.edu.escola.agendamento.enums.StatusAgendamento;
-import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "agendamentos")
-public class Agendamento {
+public class AgendamentoResponseDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuario_id", nullable = false)
-    private Usuario usuario;
-
-    @Column(nullable = false)
+    private UsuarioResumoDTO usuario;
     private LocalDate dataEvento;
-
-    @Column(columnDefinition = "TEXT")
+    private String diaSemana;
     private String descricaoEvento;
-
     private String anexoUrl;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private StatusAgendamento status = StatusAgendamento.PENDENTE;
-
-    @Column(columnDefinition = "TEXT")
+    private StatusAgendamento status;
     private String justificativaRejeicao;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "avaliado_por_id")
-    private Usuario avaliadoPor;
-
-    @CreationTimestamp
-    @Column(updatable = false)
     private LocalDateTime dataCriacao;
-
-    @UpdateTimestamp
     private LocalDateTime dataAtualizacao;
 
-    public Agendamento() {
+    public AgendamentoResponseDTO() {
     }
 
-    public Agendamento(Long id, Usuario usuario, LocalDate dataEvento, String descricaoEvento, String anexoUrl,
-                       StatusAgendamento status, String justificativaRejeicao, Usuario avaliadoPor, LocalDateTime dataCriacao,
-                       LocalDateTime dataAtualizacao) {
-        this.id = id;
-        this.usuario = usuario;
-        this.dataEvento = dataEvento;
-        this.descricaoEvento = descricaoEvento;
-        this.anexoUrl = anexoUrl;
-        this.status = status;
-        this.justificativaRejeicao = justificativaRejeicao;
-        this.avaliadoPor = avaliadoPor;
-        this.dataCriacao = dataCriacao;
-        this.dataAtualizacao = dataAtualizacao;
-    }
-
-    //Getters e Setters
     public Long getId() {
         return id;
     }
@@ -73,11 +29,11 @@ public class Agendamento {
         this.id = id;
     }
 
-    public Usuario getUsuario() {
+    public UsuarioResumoDTO getUsuario() {
         return usuario;
     }
 
-    public void setUsuario(Usuario usuario) {
+    public void setUsuario(UsuarioResumoDTO usuario) {
         this.usuario = usuario;
     }
 
@@ -87,6 +43,14 @@ public class Agendamento {
 
     public void setDataEvento(LocalDate dataEvento) {
         this.dataEvento = dataEvento;
+    }
+
+    public String getDiaSemana() {
+        return diaSemana;
+    }
+
+    public void setDiaSemana(String diaSemana) {
+        this.diaSemana = diaSemana;
     }
 
     public String getDescricaoEvento() {
@@ -119,14 +83,6 @@ public class Agendamento {
 
     public void setJustificativaRejeicao(String justificativaRejeicao) {
         this.justificativaRejeicao = justificativaRejeicao;
-    }
-
-    public Usuario getAvaliadoPor() {
-        return avaliadoPor;
-    }
-
-    public void setAvaliadoPor(Usuario avaliadoPor) {
-        this.avaliadoPor = avaliadoPor;
     }
 
     public LocalDateTime getDataCriacao() {
