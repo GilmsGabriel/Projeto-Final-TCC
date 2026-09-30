@@ -1,7 +1,7 @@
 import './App.css'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
-import Registro from './pages/Registro'
+import RegistroPage from './pages/RegistroPage'
 import PrivateRoute from './components/PrivateRoute'
 import Agendamentos from './pages/Agendamentos'
 import Admin from './pages/Admin'
@@ -10,7 +10,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/registro" element={<Registro />} />
+      <Route path="/registro" element={<RegistroPage />} />
       <Route path="/agendamentos" element={<PrivateRoute><Agendamentos /></PrivateRoute>} />
       <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/login" replace />} />
