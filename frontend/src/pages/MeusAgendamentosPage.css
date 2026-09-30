@@ -1,0 +1,77 @@
+.meus-agendamentos-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px 20px;
+  text-align: left;
+}
+
+.meus-agendamentos-page h1 {
+  margin: 0;
+}
+
+.meus-agendamentos-page a {
+  align-self: flex-start;
+  color: var(--text-h);
+  text-underline-offset: 3px;
+}
+
+.meus-agendamentos-page a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.agendamentos-lista {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agendamento-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+
+.agendamento-card h2 {
+  margin: 0;
+}
+
+.agendamento-status {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.agendamento-status-pendente {
+  background: #fff3cd;
+  color: #664d03;
+}
+
+.agendamento-status-aprovado {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.agendamento-status-rejeitado {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.agendamentos-error {
+  color: #b42318;
+}
+
+@media (prefers-color-scheme: dark) {
+  .agendamentos-error {
+    color: #ffaaa3;
+  }
+}
