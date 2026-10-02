@@ -1,0 +1,46 @@
+.calendario {
+  max-width: 400px;
+}
+
+.calendario-cabecalho,
+.calendario-grade {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.dia {
+  padding: 8px 0;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+}
+
+.dia-vazio {
+  border: none;
+}
+
+.dia-livre {
+  background-color: #d4f8d4; /* verde claro - disponível */
+  color: #1a5c1a;
+}
+
+.dia-pendente {
+  background-color: #fff3cd; /* amarelo - pendente */
+  color: #856404;
+  cursor: not-allowed;
+}
+
+.dia-aprovado {
+  background-color: #f8d4d4; /* vermelho - bloqueado */
+  color: #842029;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.dia-desabilitado {
+  background-color: #f0f0f0; /* cinza - dia de semana, nem participa */
+  color: #aaa;
+  cursor: not-allowed;
+}
