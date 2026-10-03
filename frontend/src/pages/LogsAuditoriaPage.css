@@ -1,0 +1,68 @@
+.logs-auditoria-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+  padding: 32px 20px;
+  text-align: left;
+}
+
+.logs-auditoria-page h1 {
+  margin: 0;
+}
+
+.logs-auditoria-page a {
+  align-self: flex-start;
+  color: var(--text-h);
+  text-underline-offset: 3px;
+}
+
+.logs-auditoria-page a:focus-visible,
+.logs-auditoria-tabela-container:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.logs-auditoria-tabela-container {
+  overflow-x: auto;
+}
+
+.logs-auditoria-tabela {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+}
+
+.logs-auditoria-tabela caption {
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.logs-auditoria-tabela th,
+.logs-auditoria-tabela td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.logs-auditoria-tabela th {
+  background: var(--code-bg);
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.logs-auditoria-tabela time {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.logs-auditoria-error {
+  color: #b42318;
+}
+
+@media (prefers-color-scheme: dark) {
+  .logs-auditoria-error {
+    color: #ffaaa3;
+  }
+}
