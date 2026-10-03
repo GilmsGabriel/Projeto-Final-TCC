@@ -1,4 +1,5 @@
 import { loginMock } from "./loginMock";
+import { calendarioFake, reservarDataFake } from "./calendarioMock";
 
 export const agendamentosMock = [
   {
@@ -53,4 +54,61 @@ export const agendamentosMock = [
 
 export function meusAgendamentosFake(usuarioId) {
   return agendamentosMock.filter((agendamento) => agendamento.usuario.id === usuarioId);
+}
+
+// POST /api/agendamentos
+export function criarAgendamentoFake({ dataEvento, descricaoEvento }, usuario) {
+  const [ano, mes, dia] = (dataEvento || "").split("-").map(Number);
+  const data = new Date(ano, mes - 1, dia);
+  const diaSemana = data.getDay();
+
+  if (diaSemana !== 0 && diaSemana !== 6) {
+    throw new Error("Agendamentos são permitidos apenas aos sábados e domingos.");
+  }
+  if (!descricaoEvento?.trim()) {
+    throw new Error("A descrição do evento é obrigatória.");
+  }
+  if (!usuario) {
+    throw new Error("Usuário não encontrado.");
+  }
+
+  const dataOcupada = calendarioFake(mes, ano).some((registro) => registro.data === dataEvento)
+    || agendamentosMock.some((agendamento) => agendamento.dataEvento === dataEvento && agendamento.status !== "REJEITADO");
+
+  if (dataOcupada) {
+    throw new Error("Já existe um agendamento para esta data. Escolha outro sábado ou domingo.");
+  }
+
+  const agora = new Date().toISOString();
+  const agendamento = {
+    id: Math.max(...agendamentosMock.map((item) => item.id)) + 1,
+    usuario: { id: usuario.id, nomeCompleto: usuario.nomeCompleto, email: usuario.email },
+    dataEvento,
+    diaSemana: diaSemana === 6 ? "SATURDAY" : "SUNDAY",
+    descricaoEvento: descricaoEvento.trim(),
+    anexoUrl: null,
+    status: "PENDENTE",
+    justificativaRejeicao: null,
+    dataCriacao: agora,
+    dataAtualizacao: agora,
+  };
+
+  agendamentosMock.push(agendamento);
+  reservarDataFake(dataEvento);
+  return { ...agendamento };
+}
+
+// POST /api/agendamentos/{id}/anexo
+export function enviarAnexoFake(id, formData) {
+  const agendamento = agendamentosMock.find((item) => item.id === Number(id));
+  if (!agendamento) throw new Error("Agendamento não encontrado.");
+
+  const arquivo = formData.get("arquivo");
+  if (!(arquivo instanceof File) || arquivo.size === 0) {
+    throw new Error("Selecione um arquivo não vazio para enviar o anexo.");
+  }
+
+  agendamento.anexoUrl = `/anexos/${id}/${encodeURIComponent(arquivo.name)}`;
+  agendamento.dataAtualizacao = new Date().toISOString();
+  return { ...agendamento };
 }
