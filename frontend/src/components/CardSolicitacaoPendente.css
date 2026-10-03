@@ -1,0 +1,47 @@
+.card-solicitacao {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.card-acoes {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.card-erro {
+  color: #842029;
+  font-size: 0.9em;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.modal-conteudo {
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  width: 320px;
+}
+
+.modal-conteudo textarea {
+  width: 100%;
+  margin: 12px 0;
+  font-family: inherit;
+}
+
+.modal-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

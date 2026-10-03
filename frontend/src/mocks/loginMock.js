@@ -13,7 +13,7 @@ export const loginMock = {
 export function loginFake(email, senha) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      if (email === loginMock.usuario.email && senha === "SenhaForte123") resolve({ data: loginMock });
+        if (email === loginMock.usuario.email && senha === "SenhaForte123") resolve({ data: loginMock });
       else reject(new Error("Credenciais inválidas"));
     }, 300);
   });
