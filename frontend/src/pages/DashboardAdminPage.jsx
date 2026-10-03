@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../api/api";
 import CardSolicitacaoPendente from "../components/CardSolicitacaoPendente";
 import "./DashboardAdminPage.css";
@@ -46,6 +47,7 @@ export default function DashboardAdminPage() {
   return (
     <div className="dashboard-admin">
       <h1>Solicitações pendentes</h1>
+      <Link className="dashboard-admin-logs" to="/admin/logs">Logs de auditoria</Link>
 
       {solicitacoes.length === 0 ? (
         <p>Nenhuma solicitação pendente no momento.</p>

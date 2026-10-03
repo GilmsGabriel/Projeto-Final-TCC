@@ -9,6 +9,18 @@
   margin-bottom: 24px;
 }
 
+.dashboard-admin-logs {
+  display: inline-block;
+  margin-bottom: 24px;
+  color: var(--text-h);
+  text-underline-offset: 3px;
+}
+
+.dashboard-admin-logs:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .lista-solicitacoes {
   display: flex;
   flex-direction: column;
