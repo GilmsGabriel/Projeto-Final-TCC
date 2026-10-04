@@ -38,3 +38,6 @@ spring:
           auth: true
           starttls:
             enable: true
+
+file:
+  upload-dir: ./uploads/agendamentos
