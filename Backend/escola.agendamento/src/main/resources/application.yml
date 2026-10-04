@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: escola.agendamento
+
+  # Configuração do Banco de Dados (PostgreSQL)
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/escola}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  # Configuração do JPA / Hibernate (Sem ferramentas de migration)
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+    open-in-view: false
+
+  # Configuração de Limite de Upload (Multipart)
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+  # Configuração de Envio de E-mails (Spring Mail)
+  mail:
+    host: ${MAIL_HOST:smtp.exemplo.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:seu_email@exemplo.com}
+    password: ${MAIL_PASSWORD:sua_senha_de_email}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
