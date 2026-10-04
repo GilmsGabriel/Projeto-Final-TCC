@@ -11,8 +11,8 @@ import br.edu.escola.agendamento.exception.RegraNegocioException;
 import br.edu.escola.agendamento.repository.AgendamentoRepository;
 import br.edu.escola.agendamento.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
-
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -22,13 +22,16 @@ public class AgendamentoService {
 
     private final AgendamentoRepository agendamentoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final FileStorageService fileStorageService;
 
     public AgendamentoService(
             AgendamentoRepository agendamentoRepository,
-            UsuarioRepository usuarioRepository
+            UsuarioRepository usuarioRepository,
+            FileStorageService fileStorageService
     ) {
         this.agendamentoRepository = agendamentoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.fileStorageService = fileStorageService;
     }
 
     @Transactional
@@ -53,13 +56,42 @@ public class AgendamentoService {
         agendamento.setDescricaoEvento(dto.getDescricaoEvento());
         agendamento.setStatus(StatusAgendamento.PENDENTE);
 
-        Agendamento salvo = agendamentoRepository.save(agendamento);
+        Agendamento salvo =
+                agendamentoRepository.save(agendamento);
 
         return converterParaResponseDTO(salvo);
     }
 
+    @Transactional
+    public AgendamentoResponseDTO anexarArquivo(
+            Long agendamentoId,
+            MultipartFile arquivo
+    ) {
+        Agendamento agendamento =
+                agendamentoRepository.findById(agendamentoId)
+                        .orElseThrow(() -> new RecursoNaoEncontradoException(
+                                "Agendamento não encontrado.",
+                                "AGENDAMENTO_NAO_ENCONTRADO"
+                        ));
+
+        fileStorageService.validarArquivo(arquivo);
+
+        String anexoUrl =
+                fileStorageService.armazenarArquivo(
+                        arquivo,
+                        agendamentoId
+                );
+
+        agendamento.setAnexoUrl(anexoUrl);
+
+        Agendamento atualizado =
+                agendamentoRepository.save(agendamento);
+
+        return converterParaResponseDTO(atualizado);
+    }
 
     private void validarDiaPermitido(LocalDate data) {
+
         DayOfWeek diaSemana = data.getDayOfWeek();
 
         if (diaSemana != DayOfWeek.SATURDAY
@@ -74,6 +106,7 @@ public class AgendamentoService {
     }
 
     private void validarDisponibilidadeData(LocalDate data) {
+
         boolean existeAgendamento =
                 agendamentoRepository.existsByDataEventoAndStatusNot(
                         data,
@@ -92,7 +125,8 @@ public class AgendamentoService {
     private AgendamentoResponseDTO converterParaResponseDTO(
             Agendamento agendamento
     ) {
-        AgendamentoResponseDTO response = new AgendamentoResponseDTO();
+        AgendamentoResponseDTO response =
+                new AgendamentoResponseDTO();
 
         response.setId(agendamento.getId());
 
@@ -106,7 +140,9 @@ public class AgendamentoService {
                 )
         );
 
-        response.setDataEvento(agendamento.getDataEvento());
+        response.setDataEvento(
+                agendamento.getDataEvento()
+        );
 
         if (agendamento.getDataEvento() != null) {
             response.setDiaSemana(
@@ -116,14 +152,29 @@ public class AgendamentoService {
             );
         }
 
-        response.setDescricaoEvento(agendamento.getDescricaoEvento());
-        response.setAnexoUrl(agendamento.getAnexoUrl());
-        response.setStatus(agendamento.getStatus());
+        response.setDescricaoEvento(
+                agendamento.getDescricaoEvento()
+        );
+
+        response.setAnexoUrl(
+                agendamento.getAnexoUrl()
+        );
+
+        response.setStatus(
+                agendamento.getStatus()
+        );
+
         response.setJustificativaRejeicao(
                 agendamento.getJustificativaRejeicao()
         );
-        response.setDataCriacao(agendamento.getDataCriacao());
-        response.setDataAtualizacao(agendamento.getDataAtualizacao());
+
+        response.setDataCriacao(
+                agendamento.getDataCriacao()
+        );
+
+        response.setDataAtualizacao(
+                agendamento.getDataAtualizacao()
+        );
 
         return response;
     }

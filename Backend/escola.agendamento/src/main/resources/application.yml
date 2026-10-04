@@ -41,3 +41,4 @@ spring:
 
 file:
   upload-dir: ./uploads/agendamentos
+  max-file-size: 5MB
