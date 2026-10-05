@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class AgendamentoService {
@@ -290,5 +291,33 @@ public class AgendamentoService {
 
         // 7. Retornar resposta
         return converterParaResponseDTO(salvo);
+    }
+
+    @Transactional
+    public void expirarAgendamentosVencidos() {
+
+        List<Agendamento> agendamentosVencidos =
+                agendamentoRepository.findByStatusAndDataEventoBefore(
+                        StatusAgendamento.PENDENTE,
+                        LocalDate.now()
+                );
+
+        for (Agendamento agendamento : agendamentosVencidos) {
+
+            agendamento.setStatus(StatusAgendamento.REJEITADO);
+            agendamento.setJustificativaRejeicao(
+                    "Expirado por falta de avaliação"
+            );
+
+            logAuditoriaService.registrarEvento(
+                    agendamento.getUsuario(),
+                    "EXPIRAR_AGENDAMENTO",
+                    "Agendamento",
+                    "Agendamento ID " + agendamento.getId()
+                            + " expirado por falta de avaliação."
+            );
+
+            agendamentoRepository.save(agendamento);
+        }
     }
 }
