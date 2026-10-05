@@ -2,6 +2,7 @@ package br.edu.escola.agendamento.service;
 
 import br.edu.escola.agendamento.dto.AgendamentoRequestDTO;
 import br.edu.escola.agendamento.dto.AgendamentoResponseDTO;
+import br.edu.escola.agendamento.dto.RejeicaoRequestDTO;
 import br.edu.escola.agendamento.dto.UsuarioResumoDTO;
 import br.edu.escola.agendamento.entity.Agendamento;
 import br.edu.escola.agendamento.entity.Usuario;
@@ -227,6 +228,67 @@ public class AgendamentoService {
         Agendamento salvo = agendamentoRepository.save(agendamento);
 
         // 7. Retornar DTO
+        return converterParaResponseDTO(salvo);
+    }
+
+    @Transactional
+    public AgendamentoResponseDTO rejeitarAgendamento(
+            Long agendamentoId,
+            Long adminId,
+            RejeicaoRequestDTO dto) {
+
+        // 1. Validar se o usuário é administrador
+        Usuario admin = usuarioRepository.findById(adminId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Administrador não encontrado.",
+                        "ADMIN_NAO_ENCONTRADO"
+                ));
+
+        if (admin.getPerfil() != PerfilUsuario.ADMINISTRADOR) {
+            throw new AcessoNegadoException(
+                    "Apenas usuários com perfil ADMINISTRADOR podem rejeitar agendamentos.",
+                    "ACESSO_NEGADO"
+            );
+        }
+
+        // 2. Validar justificativa
+        if (dto == null
+                || dto.getJustificativa() == null
+                || dto.getJustificativa().isBlank()) {
+
+            throw new RegraNegocioException(
+                    "A justificativa da rejeição é obrigatória.",
+                    "JUSTIFICATIVA_OBRIGATORIA",
+                    "Informe uma justificativa para rejeitar o agendamento."
+            );
+        }
+
+        // 3. Buscar o agendamento
+        Agendamento agendamento = agendamentoRepository.findById(agendamentoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Agendamento não encontrado.",
+                        "AGENDAMENTO_NAO_ENCONTRADO"
+                ));
+
+        // 4. Alterar os dados do agendamento
+        agendamento.setStatus(StatusAgendamento.REJEITADO);
+        agendamento.setJustificativaRejeicao(dto.getJustificativa());
+        agendamento.setAvaliadoPor(admin);
+
+        // 5. Registrar auditoria
+        logAuditoriaService.registrarEvento(
+                admin,
+                "REJEITAR_AGENDAMENTO",
+                "Agendamento",
+                "Agendamento ID " + agendamento.getId()
+                        + " rejeitado. Justificativa: "
+                        + dto.getJustificativa()
+        );
+
+        // 6. Persistir
+        Agendamento salvo = agendamentoRepository.save(agendamento);
+
+        // 7. Retornar resposta
         return converterParaResponseDTO(salvo);
     }
 }
