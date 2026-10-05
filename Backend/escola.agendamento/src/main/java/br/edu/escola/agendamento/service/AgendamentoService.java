@@ -5,7 +5,9 @@ import br.edu.escola.agendamento.dto.AgendamentoResponseDTO;
 import br.edu.escola.agendamento.dto.UsuarioResumoDTO;
 import br.edu.escola.agendamento.entity.Agendamento;
 import br.edu.escola.agendamento.entity.Usuario;
+import br.edu.escola.agendamento.enums.PerfilUsuario;
 import br.edu.escola.agendamento.enums.StatusAgendamento;
+import br.edu.escola.agendamento.exception.AcessoNegadoException;
 import br.edu.escola.agendamento.exception.RecursoNaoEncontradoException;
 import br.edu.escola.agendamento.exception.RegraNegocioException;
 import br.edu.escola.agendamento.repository.AgendamentoRepository;
@@ -23,15 +25,18 @@ public class AgendamentoService {
     private final AgendamentoRepository agendamentoRepository;
     private final UsuarioRepository usuarioRepository;
     private final FileStorageService fileStorageService;
+    private final LogAuditoriaService logAuditoriaService;
 
     public AgendamentoService(
             AgendamentoRepository agendamentoRepository,
             UsuarioRepository usuarioRepository,
-            FileStorageService fileStorageService
+            FileStorageService fileStorageService,
+            LogAuditoriaService logAuditoriaService
     ) {
         this.agendamentoRepository = agendamentoRepository;
         this.usuarioRepository = usuarioRepository;
         this.fileStorageService = fileStorageService;
+        this.logAuditoriaService = logAuditoriaService;
     }
 
     @Transactional
@@ -177,5 +182,51 @@ public class AgendamentoService {
         );
 
         return response;
+    }
+
+    @Transactional
+    public AgendamentoResponseDTO aprovarAgendamento(
+            Long agendamentoId,
+            Long adminId) {
+
+        // 1. Buscar o usuário que está tentando aprovar
+        Usuario admin = usuarioRepository.findById(adminId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Administrador não encontrado.",
+                        "ADMIN_NAO_ENCONTRADO"
+                ));
+
+        // 2. Validar se o usuário possui perfil de administrador
+        if (admin.getPerfil() != PerfilUsuario.ADMINISTRADOR) {
+            throw new AcessoNegadoException(
+                    "Apenas usuários com perfil ADMINISTRADOR podem aprovar agendamentos.",
+                    "ACESSO_NEGADO"
+            );
+        }
+
+        // 3. Buscar o agendamento
+        Agendamento agendamento = agendamentoRepository.findById(agendamentoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Agendamento não encontrado.",
+                        "AGENDAMENTO_NAO_ENCONTRADO"
+                ));
+
+        // 4. Alterar o status e registrar quem avaliou
+        agendamento.setStatus(StatusAgendamento.APROVADO);
+        agendamento.setAvaliadoPor(admin);
+
+        // 5. Registrar auditoria
+        logAuditoriaService.registrarEvento(
+                admin,
+                "APROVAR_AGENDAMENTO",
+                "Agendamento",
+                "Agendamento ID " + agendamento.getId() + " aprovado."
+        );
+
+        // 6. Persistir
+        Agendamento salvo = agendamentoRepository.save(agendamento);
+
+        // 7. Retornar DTO
+        return converterParaResponseDTO(salvo);
     }
 }
