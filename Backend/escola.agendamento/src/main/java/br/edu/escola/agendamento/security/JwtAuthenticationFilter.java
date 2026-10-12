@@ -70,7 +70,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String obterTokenDaRequisicao(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
 
-        // Verifica se o cabeçalho contém texto e começa com "Bearer "
+        // Verifica se o cabeçalho contém texto e começa com "Bearer"
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7); // Remove a palavra "Bearer " e o espaço (7 caracteres)
         }

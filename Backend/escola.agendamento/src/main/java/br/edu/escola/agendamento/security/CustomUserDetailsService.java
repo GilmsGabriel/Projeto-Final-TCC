@@ -31,7 +31,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com o e-mail: " + email));
 
         // 2. Mapeia as permissões/roles.
-        // Se a sua entidade Usuario tiver roles dinâmicas, adapte esta parte.
         // papel padrão "ROLE_USER" para simplificar.
         Set<GrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
 
