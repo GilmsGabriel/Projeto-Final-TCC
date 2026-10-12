@@ -15,10 +15,10 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${app.jwt.secret}")
+    @Value("${spring.jwt.secret}")
     private String jwtSecret;
 
-    @Value("${app.jwt.expiration-milliseconds}")
+    @Value("${spring.jwt.expiration-milliseconds}")
     private long jwtExpirationDate;
 
     // Gera o token JWT usando a sintaxe moderna (0.12.x+)

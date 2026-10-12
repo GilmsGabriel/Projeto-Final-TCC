@@ -20,7 +20,7 @@ spring:
     show-sql: true
     open-in-view: false
 
-  # Configuração de Limite de Upload (Multipart)
+   # Configuração de Limitede Upload (Multipart)
   servlet:
     multipart:
       max-file-size: 5MB
@@ -39,6 +39,13 @@ spring:
           starttls:
             enable: true
 
-file:
-  upload-dir: ./uploads/agendamentos
-  max-file-size: 5MB
+# Configuração de JWT
+  jwt:
+    secret: ${JWT_SECRET:NossaChaveSecretaPadraoDeSegurancaComPeloMenos64CaracteresAquiObrigatoriamente}
+    expiration-milliseconds: ${JWT_EXPIRATION:86400000}
+
+
+  # Configuração de Limitede Upload (Multipart)
+  file:
+    upload-dir: ./uploads/agendamentos
+    max-file-size: 5MB
