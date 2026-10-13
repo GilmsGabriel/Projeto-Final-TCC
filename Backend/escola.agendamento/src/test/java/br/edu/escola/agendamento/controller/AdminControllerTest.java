@@ -23,6 +23,10 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import br.edu.escola.agendamento.service.AgendamentoService;
+import br.edu.escola.agendamento.service.UsuarioService;
+
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -60,6 +64,13 @@ class AdminControllerTest {
 
     @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
+
+    @MockitoBean
+    private AgendamentoService agendamentoService;
+
+    @MockitoBean
+    private UsuarioService usuarioService;
+
 
     @Test
     void administradorDeveReceberAgendamentosPendentes()
