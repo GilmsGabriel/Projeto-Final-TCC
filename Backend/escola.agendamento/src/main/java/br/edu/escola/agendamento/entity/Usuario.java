@@ -38,6 +38,9 @@ public class Usuario {
     @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY)
     private List<Agendamento> agendamentos;
 
+    public Usuario() {
+    }
+
     public Usuario(Long id, String nomeCompleto, String email, String senha, PerfilUsuario perfil, boolean ativo,
                    LocalDateTime dataCriacao, List<Agendamento> agendamentos) {
         this.id = id;
