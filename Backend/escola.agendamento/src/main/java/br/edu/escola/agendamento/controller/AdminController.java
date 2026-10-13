@@ -2,11 +2,14 @@ package br.edu.escola.agendamento.controller;
 
 import br.edu.escola.agendamento.dto.AgendamentoResponseDTO;
 import br.edu.escola.agendamento.dto.ApiResponse;
+import br.edu.escola.agendamento.dto.LogAuditoriaResponseDTO;
 import br.edu.escola.agendamento.dto.UsuarioResumoDTO;
 import br.edu.escola.agendamento.entity.Agendamento;
+import br.edu.escola.agendamento.entity.LogAuditoria;
 import br.edu.escola.agendamento.entity.Usuario;
 import br.edu.escola.agendamento.enums.StatusAgendamento;
 import br.edu.escola.agendamento.repository.AgendamentoRepository;
+import br.edu.escola.agendamento.repository.LogAuditoriaRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,11 +23,14 @@ import java.util.List;
 public class AdminController {
 
     private final AgendamentoRepository agendamentoRepository;
+    private final LogAuditoriaRepository logAuditoriaRepository;
 
     public AdminController(
-            AgendamentoRepository agendamentoRepository
+            AgendamentoRepository agendamentoRepository,
+            LogAuditoriaRepository logAuditoriaRepository
     ) {
         this.agendamentoRepository = agendamentoRepository;
+        this.logAuditoriaRepository = logAuditoriaRepository;
     }
 
     @GetMapping("/agendamentos/pendentes")
@@ -36,19 +42,38 @@ public class AdminController {
                 agendamentoRepository
                         .findByStatus(StatusAgendamento.PENDENTE)
                         .stream()
-                        .map(this::converterParaResponseDTO)
+                        .map(this::converterParaAgendamentoResponseDTO)
                         .toList();
 
-        ApiResponse<List<AgendamentoResponseDTO>> response =
+        return ResponseEntity.ok(
                 ApiResponse.ok(
                         agendamentosPendentes,
                         "Agendamentos pendentes consultados com sucesso."
-                );
-
-        return ResponseEntity.ok(response);
+                )
+        );
     }
 
-    private AgendamentoResponseDTO converterParaResponseDTO(
+    @GetMapping("/logs")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<ApiResponse<List<LogAuditoriaResponseDTO>>>
+    listarLogs() {
+
+        List<LogAuditoriaResponseDTO> logs =
+                logAuditoriaRepository
+                        .findAllByOrderByDataHoraDesc()
+                        .stream()
+                        .map(this::converterParaLogAuditoriaResponseDTO)
+                        .toList();
+
+        return ResponseEntity.ok(
+                ApiResponse.ok(
+                        logs,
+                        "Logs de auditoria consultados com sucesso."
+                )
+        );
+    }
+
+    private AgendamentoResponseDTO converterParaAgendamentoResponseDTO(
             Agendamento agendamento
     ) {
         AgendamentoResponseDTO response =
@@ -59,7 +84,7 @@ public class AdminController {
         Usuario usuario = agendamento.getUsuario();
 
         response.setUsuario(
-                new UsuarioResumoDTO(
+                usuario == null ? null : new UsuarioResumoDTO(
                         usuario.getId(),
                         usuario.getNomeCompleto(),
                         usuario.getEmail()
@@ -89,6 +114,32 @@ public class AdminController {
 
         response.setDataCriacao(agendamento.getDataCriacao());
         response.setDataAtualizacao(agendamento.getDataAtualizacao());
+
+        return response;
+    }
+
+    private LogAuditoriaResponseDTO converterParaLogAuditoriaResponseDTO(
+            LogAuditoria log
+    ) {
+        LogAuditoriaResponseDTO response =
+                new LogAuditoriaResponseDTO();
+
+        response.setId(log.getId());
+
+        Usuario usuario = log.getUsuario();
+
+        response.setUsuario(
+                usuario == null ? null : new UsuarioResumoDTO(
+                        usuario.getId(),
+                        usuario.getNomeCompleto(),
+                        usuario.getEmail()
+                )
+        );
+
+        response.setAcao(log.getAcao());
+        response.setEntidadeAfetada(log.getEntidadeAfetada());
+        response.setDetalhes(log.getDetalhes());
+        response.setDataHora(log.getDataHora());
 
         return response;
     }
