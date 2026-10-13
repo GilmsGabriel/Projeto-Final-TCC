@@ -45,6 +45,12 @@ public class SecurityConfig {
                                 HttpMethod.POST,
                                 "/api/auth/registrar"
                         ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/agendamentos/calendario"
+                        ).permitAll()
+
                         .requestMatchers("/auth/**").permitAll()
 
                         // Qualquer outra requisição exigirá um token JWT válido
