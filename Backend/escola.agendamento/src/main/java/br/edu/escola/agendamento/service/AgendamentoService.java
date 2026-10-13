@@ -133,7 +133,7 @@ public class AgendamentoService {
         }
     }
 
-    private AgendamentoResponseDTO converterParaResponseDTO(
+    public AgendamentoResponseDTO converterParaResponseDTO(
             Agendamento agendamento
     ) {
         AgendamentoResponseDTO response = new AgendamentoResponseDTO();

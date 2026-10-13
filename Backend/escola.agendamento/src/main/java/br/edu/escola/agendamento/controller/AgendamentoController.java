@@ -83,6 +83,29 @@ public class AgendamentoController {
     }
 
 
+    @GetMapping("/meus")
+    @PreAuthorize("hasRole('COMUM')")
+    public ResponseEntity<ApiResponse<List<AgendamentoResponseDTO>>> listarMeusAgendamentos(
+            Authentication auth) {
+
+        UsuarioResponseDTO usuarioLogado =
+                usuarioService.buscarPerfilLogado(auth.getName());
+
+        List<AgendamentoResponseDTO> agendamentos =
+                agendamentoRepository.findByUsuarioId(usuarioLogado.getId())
+                        .stream()
+                        .map(agendamentoService::converterParaResponseDTO)
+                        .toList();
+
+        ApiResponse<List<AgendamentoResponseDTO>> response = ApiResponse.ok(
+                agendamentos,
+                "Agendamentos consultados com sucesso."
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+
     @GetMapping("/calendario")
     public ResponseEntity<ApiResponse<List<DataOcupadaDTO>>> listarCalendarioPublico(
             @RequestParam int mes,
