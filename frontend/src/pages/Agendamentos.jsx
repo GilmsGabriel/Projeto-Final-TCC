@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import CalendarioDisponibilidade from "../components/CalendarioDisponibilidade";
+import FormularioAgendamento from "../components/FormularioAgendamento";
 
 export default function Agendamentos() {
   const { usuario, logout } = useAuth();
@@ -9,8 +9,7 @@ export default function Agendamentos() {
       <h1>Agendamentos</h1>
       <p>Olá, {usuario?.nomeCompleto}</p>
       <p><Link to="/agendamentos/meus">Meus agendamentos</Link></p>
-      <p>Calendário</p>
-      <CalendarioDisponibilidade mes={9} ano={2026} />
+      <FormularioAgendamento />
       <button onClick={logout}>Sair</button>
     </div>
   );

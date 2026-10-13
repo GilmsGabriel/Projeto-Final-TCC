@@ -21,6 +21,16 @@
   border: none;
 }
 
+.dia-selecionado {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.dia:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .dia-livre {
   background-color: #d4f8d4; /* verde claro - disponível */
   color: #1a5c1a;

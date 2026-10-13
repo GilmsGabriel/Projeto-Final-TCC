@@ -4,7 +4,7 @@ import "./CalendarioDisponibilidade.css";
 
 const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-export default function CalendarioDisponibilidade({ mes, ano }) {
+export default function CalendarioDisponibilidade({ mes, ano, dataSelecionada, onSelecionarData }) {
   const [registros, setRegistros] = useState([]);
   const [carregando, setCarregando] = useState(true);
 
@@ -78,8 +78,11 @@ export default function CalendarioDisponibilidade({ mes, ano }) {
           return (
             <button
               key={dataFormatada}
-              className={classe}
+              type="button"
+              className={`${classe}${dataSelecionada === dataFormatada ? " dia-selecionado" : ""}`}
               disabled={!ehFimDeSemana || status === "APROVADO" || status === "PENDENTE"}
+              aria-pressed={onSelecionarData ? dataSelecionada === dataFormatada : undefined}
+              onClick={() => onSelecionarData?.(dataFormatada)}
               title={status ? `${dataFormatada} - ${status}` : dataFormatada}
             >
               {dia}
