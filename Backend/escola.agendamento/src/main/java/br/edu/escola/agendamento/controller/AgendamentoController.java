@@ -26,6 +26,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import br.edu.escola.agendamento.dto.AgendamentoRequestDTO;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -49,6 +53,35 @@ public class AgendamentoController {
         this.agendamentoService = agendamentoService;
         this.usuarioService = usuarioService;
     }
+
+
+    @PostMapping
+    @PreAuthorize("hasRole('COMUM')")
+    public ResponseEntity<ApiResponse<AgendamentoResponseDTO>> solicitarAgendamento(
+            @RequestBody @Valid AgendamentoRequestDTO dto,
+            Authentication auth) {
+
+        // Identifica o usuário autenticado pelo e-mail
+        UsuarioResponseDTO usuarioLogado =
+                usuarioService.buscarPerfilLogado(auth.getName());
+
+        // Cria a solicitação usando o ID do usuário autenticado
+        AgendamentoResponseDTO resultado =
+                agendamentoService.solicitarAgendamento(
+                        usuarioLogado.getId(),
+                        dto
+                );
+
+        // Monta a resposta no padrão ApiResponse
+        ApiResponse<AgendamentoResponseDTO> response = ApiResponse.ok(
+                resultado,
+                "Solicitação de agendamento criada com sucesso."
+        );
+
+        // Retorna HTTP 201 Created
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
 
     @GetMapping("/calendario")
     public ResponseEntity<ApiResponse<List<DataOcupadaDTO>>> listarCalendarioPublico(
