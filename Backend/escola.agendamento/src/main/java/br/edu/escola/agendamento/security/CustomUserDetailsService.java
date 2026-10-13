@@ -32,7 +32,11 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         // 2. Mapeia as permissões/roles.
         // papel padrão "ROLE_USER" para simplificar.
-        Set<GrantedAuthority> authorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_USER"));
+        String nomePerfil = usuario.getPerfil().name();
+
+        Set<GrantedAuthority> authorities = Collections.singleton(
+                new SimpleGrantedAuthority("ROLE_" + nomePerfil)
+        );
 
         // 3. Retorna o objeto User do próprio Spring Security (que implementa UserDetails)
         return new User(
