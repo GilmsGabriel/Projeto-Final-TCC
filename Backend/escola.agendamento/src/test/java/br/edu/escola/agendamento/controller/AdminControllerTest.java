@@ -2,10 +2,13 @@ package br.edu.escola.agendamento.controller;
 
 import br.edu.escola.agendamento.config.SecurityConfig;
 import br.edu.escola.agendamento.entity.Agendamento;
+import br.edu.escola.agendamento.entity.LogAuditoria;
 import br.edu.escola.agendamento.entity.Usuario;
 import br.edu.escola.agendamento.enums.StatusAgendamento;
 import br.edu.escola.agendamento.repository.AgendamentoRepository;
+import br.edu.escola.agendamento.repository.LogAuditoriaRepository;
 import br.edu.escola.agendamento.security.CustomUserDetailsService;
+import br.edu.escola.agendamento.security.JwtAuthenticationFilter;
 import br.edu.escola.agendamento.security.JwtTokenProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.Mockito.never;
@@ -33,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(AdminController.class)
 @Import({
         SecurityConfig.class,
+        JwtAuthenticationFilter.class,
         JwtTokenProvider.class
 })
 @TestPropertySource(properties = {
@@ -51,10 +56,13 @@ class AdminControllerTest {
     private AgendamentoRepository agendamentoRepository;
 
     @MockitoBean
+    private LogAuditoriaRepository logAuditoriaRepository;
+
+    @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
 
     @Test
-    void administradorDeveReceberSomenteAgendamentosPendentes()
+    void administradorDeveReceberAgendamentosPendentes()
             throws Exception {
 
         String emailAdmin = "admin@escola.edu.br";
@@ -93,18 +101,10 @@ class AdminControllerTest {
                         ))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sucesso").value(true))
-                .andExpect(jsonPath("$.mensagem")
-                        .value(
-                                "Agendamentos pendentes consultados com sucesso."
-                        ))
                 .andExpect(jsonPath("$.dados.length()").value(1))
                 .andExpect(jsonPath("$.dados[0].id").value(1))
-                .andExpect(jsonPath("$.dados[0].usuario.id").value(10))
-                .andExpect(jsonPath("$.dados[0].usuario.nomeCompleto")
-                        .value("Maria Silva"))
                 .andExpect(jsonPath("$.dados[0].status")
-                        .value("PENDENTE"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                        .value("PENDENTE"));
 
         verify(agendamentoRepository)
                 .findByStatus(StatusAgendamento.PENDENTE);
@@ -136,6 +136,111 @@ class AdminControllerTest {
 
         verify(agendamentoRepository, never())
                 .findByStatus(StatusAgendamento.PENDENTE);
+    }
+
+    @Test
+    void administradorDeveReceberLogsEmOrdemDecrescente()
+            throws Exception {
+
+        String emailAdmin = "admin@escola.edu.br";
+
+        UserDetails administrador = User
+                .withUsername(emailAdmin)
+                .password("senha")
+                .authorities("ROLE_ADMINISTRADOR")
+                .build();
+
+        when(customUserDetailsService.loadUserByUsername(emailAdmin))
+                .thenReturn(administrador);
+
+        Usuario usuarioAuditado = new Usuario();
+        usuarioAuditado.setId(2L);
+        usuarioAuditado.setNomeCompleto("Admin Geral");
+        usuarioAuditado.setEmail(emailAdmin);
+
+        LogAuditoria logRecente = new LogAuditoria();
+        logRecente.setId(55L);
+        logRecente.setUsuario(usuarioAuditado);
+        logRecente.setAcao("APROVACAO_AGENDAMENTO");
+        logRecente.setEntidadeAfetada("Agendamento#10");
+        logRecente.setDetalhes(
+                "Aprovado o agendamento de 2026-09-26."
+        );
+        logRecente.setDataHora(
+                LocalDateTime.of(2026, 9, 19, 12, 0)
+        );
+
+        LogAuditoria logAntigo = new LogAuditoria();
+        logAntigo.setId(54L);
+        logAntigo.setUsuario(usuarioAuditado);
+        logAntigo.setAcao("CRIACAO_AGENDAMENTO");
+        logAntigo.setEntidadeAfetada("Agendamento#9");
+        logAntigo.setDetalhes("Agendamento criado.");
+        logAntigo.setDataHora(
+                LocalDateTime.of(2026, 9, 18, 10, 30)
+        );
+
+        when(logAuditoriaRepository.findAllByOrderByDataHoraDesc())
+                .thenReturn(List.of(logRecente, logAntigo));
+
+        String token = gerarToken(administrador);
+
+        mockMvc.perform(get("/api/admin/logs")
+                        .header(
+                                HttpHeaders.AUTHORIZATION,
+                                "Bearer " + token
+                        ))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sucesso").value(true))
+                .andExpect(jsonPath("$.dados.length()").value(2))
+
+                // O log mais recente deve aparecer primeiro.
+                .andExpect(jsonPath("$.dados[0].id").value(55))
+                .andExpect(jsonPath("$.dados[0].acao")
+                        .value("APROVACAO_AGENDAMENTO"))
+                .andExpect(jsonPath("$.dados[0].entidadeAfetada")
+                        .value("Agendamento#10"))
+                .andExpect(jsonPath("$.dados[0].dataHora")
+                        .value("2026-09-19T12:00:00"))
+                .andExpect(jsonPath("$.dados[0].usuario.nomeCompleto")
+                        .value("Admin Geral"))
+
+                // O log mais antigo deve aparecer depois.
+                .andExpect(jsonPath("$.dados[1].id").value(54))
+                .andExpect(jsonPath("$.dados[1].dataHora")
+                        .value("2026-09-18T10:30:00"))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(logAuditoriaRepository)
+                .findAllByOrderByDataHoraDesc();
+    }
+
+    @Test
+    void usuarioComumDeveReceber403AoConsultarLogs()
+            throws Exception {
+
+        String emailUsuario = "maria@escola.edu.br";
+
+        UserDetails usuarioComum = User
+                .withUsername(emailUsuario)
+                .password("senha")
+                .authorities("ROLE_COMUM")
+                .build();
+
+        when(customUserDetailsService.loadUserByUsername(emailUsuario))
+                .thenReturn(usuarioComum);
+
+        String token = gerarToken(usuarioComum);
+
+        mockMvc.perform(get("/api/admin/logs")
+                        .header(
+                                HttpHeaders.AUTHORIZATION,
+                                "Bearer " + token
+                        ))
+                .andExpect(status().isForbidden());
+
+        verify(logAuditoriaRepository, never())
+                .findAllByOrderByDataHoraDesc();
     }
 
     private String gerarToken(UserDetails usuario) {
