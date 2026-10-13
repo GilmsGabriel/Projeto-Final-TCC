@@ -15,6 +15,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import br.edu.escola.agendamento.service.AgendamentoService;
+import br.edu.escola.agendamento.service.UsuarioService;
+import br.edu.escola.agendamento.dto.UsuarioResponseDTO;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 
 import java.util.List;
 
@@ -24,14 +30,45 @@ public class AdminController {
 
     private final AgendamentoRepository agendamentoRepository;
     private final LogAuditoriaRepository logAuditoriaRepository;
+    private final AgendamentoService agendamentoService;
+    private final UsuarioService usuarioService;
 
     public AdminController(
             AgendamentoRepository agendamentoRepository,
-            LogAuditoriaRepository logAuditoriaRepository
-    ) {
+            LogAuditoriaRepository logAuditoriaRepository,
+            AgendamentoService agendamentoService,
+            UsuarioService usuarioService) {
+
         this.agendamentoRepository = agendamentoRepository;
         this.logAuditoriaRepository = logAuditoriaRepository;
+        this.agendamentoService = agendamentoService;
+        this.usuarioService = usuarioService;
     }
+
+
+    @PutMapping("/agendamentos/{id}/aprovar")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<ApiResponse<AgendamentoResponseDTO>> aprovar(
+            @PathVariable Long id,
+            Authentication auth) {
+
+        UsuarioResponseDTO administrador =
+                usuarioService.buscarPerfilLogado(auth.getName());
+
+        AgendamentoResponseDTO resultado =
+                agendamentoService.aprovarAgendamento(
+                        id,
+                        administrador.getId()
+                );
+
+        ApiResponse<AgendamentoResponseDTO> response = ApiResponse.ok(
+                resultado,
+                "Agendamento aprovado com sucesso."
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
 
     @GetMapping("/agendamentos/pendentes")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
