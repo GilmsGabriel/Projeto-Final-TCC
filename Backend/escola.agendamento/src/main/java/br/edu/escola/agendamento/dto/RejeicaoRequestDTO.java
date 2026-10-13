@@ -1,7 +1,10 @@
 package br.edu.escola.agendamento.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class RejeicaoRequestDTO {
 
+    @NotBlank(message = "A justificativa da rejeição é obrigatória.")
     private String justificativa;
 
     public RejeicaoRequestDTO() {
