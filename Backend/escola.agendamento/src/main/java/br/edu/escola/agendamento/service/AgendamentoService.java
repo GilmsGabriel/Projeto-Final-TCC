@@ -1,3 +1,4 @@
+
 package br.edu.escola.agendamento.service;
 
 import br.edu.escola.agendamento.dto.AgendamentoRequestDTO;
@@ -28,17 +29,20 @@ public class AgendamentoService {
     private final UsuarioRepository usuarioRepository;
     private final FileStorageService fileStorageService;
     private final LogAuditoriaService logAuditoriaService;
+    private final NotificationService notificationService;
 
     public AgendamentoService(
             AgendamentoRepository agendamentoRepository,
             UsuarioRepository usuarioRepository,
             FileStorageService fileStorageService,
-            LogAuditoriaService logAuditoriaService
+            LogAuditoriaService logAuditoriaService,
+            NotificationService notificationService
     ) {
         this.agendamentoRepository = agendamentoRepository;
         this.usuarioRepository = usuarioRepository;
         this.fileStorageService = fileStorageService;
         this.logAuditoriaService = logAuditoriaService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -47,7 +51,6 @@ public class AgendamentoService {
             AgendamentoRequestDTO dto
     ) {
         validarDiaPermitido(dto.getDataEvento());
-
         validarDisponibilidadeData(dto.getDataEvento());
 
         Usuario usuario = usuarioRepository.findById(usuarioId)
@@ -63,10 +66,16 @@ public class AgendamentoService {
         agendamento.setDescricaoEvento(dto.getDescricaoEvento());
         agendamento.setStatus(StatusAgendamento.PENDENTE);
 
-        Agendamento salvo =
-                agendamentoRepository.save(agendamento);
+        Agendamento salvo = agendamentoRepository.save(agendamento);
 
-        return converterParaResponseDTO(salvo);
+        AgendamentoResponseDTO response = converterParaResponseDTO(salvo);
+
+        notificationService.enviarEmailConfirmacaoSolicitacao(
+                usuario,
+                salvo
+        );
+
+        return response;
     }
 
     @Transactional
@@ -74,31 +83,27 @@ public class AgendamentoService {
             Long agendamentoId,
             MultipartFile arquivo
     ) {
-        Agendamento agendamento =
-                agendamentoRepository.findById(agendamentoId)
-                        .orElseThrow(() -> new RecursoNaoEncontradoException(
-                                "Agendamento não encontrado.",
-                                "AGENDAMENTO_NAO_ENCONTRADO"
-                        ));
+        Agendamento agendamento = agendamentoRepository.findById(agendamentoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Agendamento não encontrado.",
+                        "AGENDAMENTO_NAO_ENCONTRADO"
+                ));
 
         fileStorageService.validarArquivo(arquivo);
 
-        String anexoUrl =
-                fileStorageService.armazenarArquivo(
-                        arquivo,
-                        agendamentoId
-                );
+        String anexoUrl = fileStorageService.armazenarArquivo(
+                arquivo,
+                agendamentoId
+        );
 
         agendamento.setAnexoUrl(anexoUrl);
 
-        Agendamento atualizado =
-                agendamentoRepository.save(agendamento);
+        Agendamento atualizado = agendamentoRepository.save(agendamento);
 
         return converterParaResponseDTO(atualizado);
     }
 
     private void validarDiaPermitido(LocalDate data) {
-
         DayOfWeek diaSemana = data.getDayOfWeek();
 
         if (diaSemana != DayOfWeek.SATURDAY
@@ -113,7 +118,6 @@ public class AgendamentoService {
     }
 
     private void validarDisponibilidadeData(LocalDate data) {
-
         boolean existeAgendamento =
                 agendamentoRepository.existsByDataEventoAndStatusNot(
                         data,
@@ -132,8 +136,7 @@ public class AgendamentoService {
     private AgendamentoResponseDTO converterParaResponseDTO(
             Agendamento agendamento
     ) {
-        AgendamentoResponseDTO response =
-                new AgendamentoResponseDTO();
+        AgendamentoResponseDTO response = new AgendamentoResponseDTO();
 
         response.setId(agendamento.getId());
 
@@ -147,9 +150,7 @@ public class AgendamentoService {
                 )
         );
 
-        response.setDataEvento(
-                agendamento.getDataEvento()
-        );
+        response.setDataEvento(agendamento.getDataEvento());
 
         if (agendamento.getDataEvento() != null) {
             response.setDiaSemana(
@@ -159,29 +160,14 @@ public class AgendamentoService {
             );
         }
 
-        response.setDescricaoEvento(
-                agendamento.getDescricaoEvento()
-        );
-
-        response.setAnexoUrl(
-                agendamento.getAnexoUrl()
-        );
-
-        response.setStatus(
-                agendamento.getStatus()
-        );
-
+        response.setDescricaoEvento(agendamento.getDescricaoEvento());
+        response.setAnexoUrl(agendamento.getAnexoUrl());
+        response.setStatus(agendamento.getStatus());
         response.setJustificativaRejeicao(
                 agendamento.getJustificativaRejeicao()
         );
-
-        response.setDataCriacao(
-                agendamento.getDataCriacao()
-        );
-
-        response.setDataAtualizacao(
-                agendamento.getDataAtualizacao()
-        );
+        response.setDataCriacao(agendamento.getDataCriacao());
+        response.setDataAtualizacao(agendamento.getDataAtualizacao());
 
         return response;
     }
@@ -189,16 +175,14 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoResponseDTO aprovarAgendamento(
             Long agendamentoId,
-            Long adminId) {
-
-        // 1. Buscar o usuário que está tentando aprovar
+            Long adminId
+    ) {
         Usuario admin = usuarioRepository.findById(adminId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Administrador não encontrado.",
                         "ADMIN_NAO_ENCONTRADO"
                 ));
 
-        // 2. Validar se o usuário possui perfil de administrador
         if (admin.getPerfil() != PerfilUsuario.ADMINISTRADOR) {
             throw new AcessoNegadoException(
                     "Apenas usuários com perfil ADMINISTRADOR podem aprovar agendamentos.",
@@ -206,18 +190,15 @@ public class AgendamentoService {
             );
         }
 
-        // 3. Buscar o agendamento
         Agendamento agendamento = agendamentoRepository.findById(agendamentoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Agendamento não encontrado.",
                         "AGENDAMENTO_NAO_ENCONTRADO"
                 ));
 
-        // 4. Alterar o status e registrar quem avaliou
         agendamento.setStatus(StatusAgendamento.APROVADO);
         agendamento.setAvaliadoPor(admin);
 
-        // 5. Registrar auditoria
         logAuditoriaService.registrarEvento(
                 admin,
                 "APROVAR_AGENDAMENTO",
@@ -225,20 +206,24 @@ public class AgendamentoService {
                 "Agendamento ID " + agendamento.getId() + " aprovado."
         );
 
-        // 6. Persistir
         Agendamento salvo = agendamentoRepository.save(agendamento);
 
-        // 7. Retornar DTO
-        return converterParaResponseDTO(salvo);
+        AgendamentoResponseDTO response = converterParaResponseDTO(salvo);
+
+        notificationService.enviarEmailAprovacao(
+                salvo.getUsuario(),
+                salvo
+        );
+
+        return response;
     }
 
     @Transactional
     public AgendamentoResponseDTO rejeitarAgendamento(
             Long agendamentoId,
             Long adminId,
-            RejeicaoRequestDTO dto) {
-
-        // 1. Validar se o usuário é administrador
+            RejeicaoRequestDTO dto
+    ) {
         Usuario admin = usuarioRepository.findById(adminId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Administrador não encontrado.",
@@ -252,7 +237,6 @@ public class AgendamentoService {
             );
         }
 
-        // 2. Validar justificativa
         if (dto == null
                 || dto.getJustificativa() == null
                 || dto.getJustificativa().isBlank()) {
@@ -264,19 +248,16 @@ public class AgendamentoService {
             );
         }
 
-        // 3. Buscar o agendamento
         Agendamento agendamento = agendamentoRepository.findById(agendamentoId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                         "Agendamento não encontrado.",
                         "AGENDAMENTO_NAO_ENCONTRADO"
                 ));
 
-        // 4. Alterar os dados do agendamento
         agendamento.setStatus(StatusAgendamento.REJEITADO);
         agendamento.setJustificativaRejeicao(dto.getJustificativa());
         agendamento.setAvaliadoPor(admin);
 
-        // 5. Registrar auditoria
         logAuditoriaService.registrarEvento(
                 admin,
                 "REJEITAR_AGENDAMENTO",
@@ -286,16 +267,21 @@ public class AgendamentoService {
                         + dto.getJustificativa()
         );
 
-        // 6. Persistir
         Agendamento salvo = agendamentoRepository.save(agendamento);
 
-        // 7. Retornar resposta
-        return converterParaResponseDTO(salvo);
+        AgendamentoResponseDTO response = converterParaResponseDTO(salvo);
+
+        notificationService.enviarEmailRejeicao(
+                salvo.getUsuario(),
+                salvo,
+                dto.getJustificativa()
+        );
+
+        return response;
     }
 
     @Transactional
     public void expirarAgendamentosVencidos() {
-
         List<Agendamento> agendamentosVencidos =
                 agendamentoRepository.findByStatusAndDataEventoBefore(
                         StatusAgendamento.PENDENTE,
@@ -303,7 +289,6 @@ public class AgendamentoService {
                 );
 
         for (Agendamento agendamento : agendamentosVencidos) {
-
             agendamento.setStatus(StatusAgendamento.REJEITADO);
             agendamento.setJustificativaRejeicao(
                     "Expirado por falta de avaliação"
