@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -36,6 +37,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Exemplo: Permite acesso público aos endpoints de login/autenticação
                         // Adapte a rota "/auth/**" de acordo com o seu Controller de login
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/auth/registrar"
+                        ).permitAll()
                         .requestMatchers("/auth/**").permitAll()
 
                         // Qualquer outra requisição exigirá um token JWT válido
