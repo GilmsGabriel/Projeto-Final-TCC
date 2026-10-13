@@ -37,6 +37,9 @@ public class LogAuditoria {
     @Column(updatable = false)
     private LocalDateTime dataHora;
 
+    public LogAuditoria() {
+    }
+
     public Long getId() {
         return id;
     }
