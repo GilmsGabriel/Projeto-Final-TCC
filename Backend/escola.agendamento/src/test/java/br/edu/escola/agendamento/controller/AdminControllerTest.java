@@ -25,6 +25,22 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import br.edu.escola.agendamento.service.AgendamentoService;
 import br.edu.escola.agendamento.service.UsuarioService;
+import br.edu.escola.agendamento.dto.AgendamentoResponseDTO;
+import br.edu.escola.agendamento.dto.RejeicaoRequestDTO;
+import br.edu.escola.agendamento.dto.UsuarioResponseDTO;
+import org.springframework.http.MediaType;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+
+import br.edu.escola.agendamento.service.AgendamentoService;
+import br.edu.escola.agendamento.service.UsuarioService;
 
 
 import java.time.LocalDate;
@@ -265,4 +281,63 @@ class AdminControllerTest {
 
         return jwtTokenProvider.gerarToken(authentication);
     }
+
+
+    @Test
+    void administradorDeveRejeitarAgendamento() throws Exception {
+        String emailAdmin = "admin@escola.edu.br";
+
+        UserDetails administrador = User
+                .withUsername(emailAdmin)
+                .password("senha")
+                .authorities("ROLE_ADMINISTRADOR")
+                .build();
+
+        when(customUserDetailsService.loadUserByUsername(emailAdmin))
+                .thenReturn(administrador);
+
+        UsuarioResponseDTO perfilAdmin = new UsuarioResponseDTO();
+        perfilAdmin.setId(2L);
+
+        when(usuarioService.buscarPerfilLogado(emailAdmin))
+                .thenReturn(perfilAdmin);
+
+        AgendamentoResponseDTO resultado = new AgendamentoResponseDTO();
+        resultado.setId(1L);
+        resultado.setStatus(StatusAgendamento.REJEITADO);
+        resultado.setJustificativaRejeicao("Espaço indisponível.");
+
+        when(agendamentoService.rejeitarAgendamento(
+                eq(1L),
+                eq(2L),
+                any(RejeicaoRequestDTO.class)
+        )).thenReturn(resultado);
+
+        String token = gerarToken(administrador);
+
+        mockMvc.perform(put("/api/admin/agendamentos/1/rejeitar")
+                        .header(
+                                HttpHeaders.AUTHORIZATION,
+                                "Bearer " + token
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "justificativa": "Espaço indisponível."
+                            }
+                            """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sucesso").value(true))
+                .andExpect(jsonPath("$.dados.id").value(1))
+                .andExpect(jsonPath("$.dados.status").value("REJEITADO"))
+                .andExpect(jsonPath("$.dados.justificativaRejeicao")
+                        .value("Espaço indisponível."));
+
+        verify(agendamentoService).rejeitarAgendamento(
+                eq(1L),
+                eq(2L),
+                any(RejeicaoRequestDTO.class)
+        );
+    }
+
 }

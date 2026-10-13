@@ -1,26 +1,24 @@
 package br.edu.escola.agendamento.controller;
 
-import br.edu.escola.agendamento.dto.AgendamentoResponseDTO;
-import br.edu.escola.agendamento.dto.ApiResponse;
-import br.edu.escola.agendamento.dto.LogAuditoriaResponseDTO;
-import br.edu.escola.agendamento.dto.UsuarioResumoDTO;
+import br.edu.escola.agendamento.dto.*;
 import br.edu.escola.agendamento.entity.Agendamento;
 import br.edu.escola.agendamento.entity.LogAuditoria;
 import br.edu.escola.agendamento.entity.Usuario;
 import br.edu.escola.agendamento.enums.StatusAgendamento;
 import br.edu.escola.agendamento.repository.AgendamentoRepository;
 import br.edu.escola.agendamento.repository.LogAuditoriaRepository;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import br.edu.escola.agendamento.service.AgendamentoService;
 import br.edu.escola.agendamento.service.UsuarioService;
-import br.edu.escola.agendamento.dto.UsuarioResponseDTO;
 import org.springframework.security.core.Authentication;
+import br.edu.escola.agendamento.dto.RejeicaoRequestDTO;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 
 import java.util.List;
 
@@ -45,7 +43,6 @@ public class AdminController {
         this.usuarioService = usuarioService;
     }
 
-
     @PutMapping("/agendamentos/{id}/aprovar")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<ApiResponse<AgendamentoResponseDTO>> aprovar(
@@ -69,6 +66,30 @@ public class AdminController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/agendamentos/{id}/rejeitar")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public ResponseEntity<ApiResponse<AgendamentoResponseDTO>> rejeitar(
+            @PathVariable Long id,
+            @RequestBody @Valid RejeicaoRequestDTO dto,
+            Authentication auth) {
+
+        UsuarioResponseDTO administrador =
+                usuarioService.buscarPerfilLogado(auth.getName());
+
+        AgendamentoResponseDTO resultado =
+                agendamentoService.rejeitarAgendamento(
+                        id,
+                        administrador.getId(),
+                        dto
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.ok(
+                        resultado,
+                        "Agendamento rejeitado com sucesso."
+                )
+        );
+    }
 
     @GetMapping("/agendamentos/pendentes")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
