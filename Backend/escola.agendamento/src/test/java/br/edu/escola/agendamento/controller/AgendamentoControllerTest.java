@@ -4,10 +4,12 @@ package br.edu.escola.agendamento.controller;
 import br.edu.escola.agendamento.config.SecurityConfig;
 import br.edu.escola.agendamento.entity.Agendamento;
 import br.edu.escola.agendamento.enums.StatusAgendamento;
+import br.edu.escola.agendamento.repository.AgendamentoRepository;
 import br.edu.escola.agendamento.security.CustomUserDetailsService;
 import br.edu.escola.agendamento.security.JwtAuthenticationFilter;
 import br.edu.escola.agendamento.security.JwtTokenProvider;
-import br.edu.escola.agendamento.repository.AgendamentoRepository;
+import br.edu.escola.agendamento.service.AgendamentoService;
+import br.edu.escola.agendamento.service.UsuarioService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -37,6 +39,12 @@ class AgendamentoControllerTest {
 
     @MockitoBean
     private AgendamentoRepository agendamentoRepository;
+
+    @MockitoBean
+    private AgendamentoService agendamentoService;
+
+    @MockitoBean
+    private UsuarioService usuarioService;
 
     @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
