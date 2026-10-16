@@ -1,5 +1,4 @@
 import axios, { AxiosError } from "axios";
-import { registrarFake } from "../mocks/registroMock";
 import { meusAgendamentosFake, criarAgendamentoFake, enviarAnexoFake } from "../mocks/agendamentosMock";
 import { calendarioFake } from "../mocks/calendarioMock";
 import { pendentesFake, aprovarFake, rejeitarFake } from "../mocks/adminMock";
@@ -14,7 +13,6 @@ const REGEX_APROVAR = /^\/api\/admin\/agendamentos\/(\d+)\/aprovar$/;
 const REGEX_REJEITAR = /^\/api\/admin\/agendamentos\/(\d+)\/rejeitar$/;
 
 function rotaMockada(config) {
-  if (config.method === "post" && config.url === "/api/auth/registrar") return "registrar";
   if (config.method === "post" && config.url === "/api/agendamentos") return "criarAgendamento";
   if (config.method === "post" && REGEX_ANEXO.test(config.url)) return "enviarAnexo";
   if (config.method === "get" && config.url === "/api/agendamentos/meus") return "meus";
@@ -43,10 +41,6 @@ api.interceptors.request.use((config) => {
         let status = 200;
 
         switch (rota) {
-          case "registrar":
-            data = registrarFake(JSON.parse(mockConfig.data));
-            status = 201;
-            break;
           case "criarAgendamento":
             data = criarAgendamentoFake(JSON.parse(mockConfig.data), JSON.parse(localStorage.getItem("usuario")));
             status = 201;
