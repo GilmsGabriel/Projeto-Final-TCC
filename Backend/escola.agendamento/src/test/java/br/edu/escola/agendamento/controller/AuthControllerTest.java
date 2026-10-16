@@ -2,7 +2,9 @@
 package br.edu.escola.agendamento.controller;
 
 import br.edu.escola.agendamento.config.SecurityConfig;
+import br.edu.escola.agendamento.dto.LoginRequestDTO;
 import br.edu.escola.agendamento.dto.RegistroRequestDTO;
+import br.edu.escola.agendamento.dto.TokenResponseDTO;
 import br.edu.escola.agendamento.dto.UsuarioResponseDTO;
 import br.edu.escola.agendamento.enums.PerfilUsuario;
 import br.edu.escola.agendamento.exception.GlobalExceptionHandler;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -113,5 +116,65 @@ class AuthControllerTest {
 
         verify(authService, never())
                 .registrar(any(RegistroRequestDTO.class));
+    }
+
+    @Test
+    void deveAutenticarUsuarioERetornar200ComToken() throws Exception {
+
+        UsuarioResponseDTO usuario = new UsuarioResponseDTO();
+        usuario.setId(1L);
+        usuario.setNomeCompleto("Maria Silva");
+        usuario.setEmail("maria@escola.edu.br");
+        usuario.setPerfil(PerfilUsuario.COMUM);
+
+        TokenResponseDTO tokenResponse = new TokenResponseDTO();
+        tokenResponse.setToken("eyJhbGciOiJIUzI1NiJ9...");
+        tokenResponse.setTipo("Bearer");
+        tokenResponse.setExpiraEm(3600L);
+        tokenResponse.setUsuario(usuario);
+
+        when(authService.autenticar(any(LoginRequestDTO.class)))
+                .thenReturn(tokenResponse);
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email": "maria@escola.edu.br",
+                                    "senha": "SenhaForte123"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sucesso").value(true))
+                .andExpect(jsonPath("$.mensagem")
+                        .value("Login realizado com sucesso."))
+                .andExpect(jsonPath("$.dados.token").value("eyJhbGciOiJIUzI1NiJ9..."))
+                .andExpect(jsonPath("$.dados.tipo").value("Bearer"))
+                .andExpect(jsonPath("$.dados.expiraEm").value(3600))
+                .andExpect(jsonPath("$.dados.usuario.email").value("maria@escola.edu.br"))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(authService).autenticar(any(LoginRequestDTO.class));
+    }
+
+    @Test
+    void deveRetornar401QuandoCredenciaisForemInvalidas() throws Exception {
+
+        when(authService.autenticar(any(LoginRequestDTO.class)))
+                .thenThrow(new BadCredentialsException("Falha na autenticação: E-mail ou senha incorretos."));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email": "maria@escola.edu.br",
+                                    "senha": "SenhaIncorreta"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.sucesso").value(false))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(authService).autenticar(any(LoginRequestDTO.class));
     }
 }
