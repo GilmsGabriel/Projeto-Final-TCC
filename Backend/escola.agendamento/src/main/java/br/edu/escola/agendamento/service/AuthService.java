@@ -1,11 +1,19 @@
 package br.edu.escola.agendamento.service;
 
+import br.edu.escola.agendamento.dto.LoginRequestDTO;
 import br.edu.escola.agendamento.dto.RegistroRequestDTO;
+import br.edu.escola.agendamento.dto.TokenResponseDTO;
 import br.edu.escola.agendamento.dto.UsuarioResponseDTO;
 import br.edu.escola.agendamento.entity.Usuario;
 import br.edu.escola.agendamento.enums.PerfilUsuario;
 import br.edu.escola.agendamento.exception.RegraNegocioException;
 import br.edu.escola.agendamento.repository.UsuarioRepository;
+import br.edu.escola.agendamento.security.JwtTokenProvider;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,17 +23,59 @@ public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider jwtTokenProvider;
 
     public AuthService(
             UsuarioRepository usuarioRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager,
+            JwtTokenProvider jwtTokenProvider
     ) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
+
+    public TokenResponseDTO autenticar(LoginRequestDTO dto) {
+        // Busca o usuário para validar status e montar o DTO de retorno
+        Usuario usuario = usuarioRepository.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new BadCredentialsException("Credenciais inválidas."));
+
+        // Valida que usuários inativos não autenticam
+        if (!usuario.isAtivo()) {
+            throw new DisabledException("Usuário inativo não pode autenticar.");
+        }
+
+        // Valida as credenciais com o Spring Security
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getSenha())
+        );
+
+        // Gera o token JWT
+        String token = jwtTokenProvider.gerarToken(authentication);
+
+        // Mapeia o UsuarioResponseDTO usando os setters padrão da classe já existente
+        UsuarioResponseDTO usuarioResponseDTO = new UsuarioResponseDTO();
+        usuarioResponseDTO.setId(usuario.getId());
+        usuarioResponseDTO.setNomeCompleto(usuario.getNomeCompleto());
+        usuarioResponseDTO.setEmail(usuario.getEmail());
+        usuarioResponseDTO.setPerfil(usuario.getPerfil());
+        usuarioResponseDTO.setDataCriacao(usuario.getDataCriacao());
+
+        // Retorna o response do token de acordo com o contrato
+        return TokenResponseDTO.builder()
+                .token(token)
+                .tipo("Bearer")
+                .expiraEm(3600L)
+                .usuario(usuarioResponseDTO)
+                .build();
     }
 
     @Transactional
     public UsuarioResponseDTO registrar(RegistroRequestDTO dto) {
+        // ... (resto do método registrar mantido exatamente como você enviou) ...
 
         if (dto == null) {
             throw new RegraNegocioException(
