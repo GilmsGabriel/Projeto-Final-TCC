@@ -6,14 +6,24 @@ import br.edu.escola.agendamento.entity.Usuario;
 import br.edu.escola.agendamento.enums.PerfilUsuario;
 import br.edu.escola.agendamento.exception.RegraNegocioException;
 import br.edu.escola.agendamento.repository.UsuarioRepository;
+import br.edu.escola.agendamento.security.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import br.edu.escola.agendamento.dto.LoginRequestDTO;
+import br.edu.escola.agendamento.dto.TokenResponseDTO;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+
+import java.util.Optional;
 
 import java.time.LocalDateTime;
 
@@ -32,15 +42,24 @@ class AuthServiceTest {
     @Mock
     private UsuarioRepository usuarioRepository;
 
+    @Mock
+    private AuthenticationManager authenticationManager;
+
+    @Mock
+    private JwtTokenProvider jwtTokenProvider;
+
     private PasswordEncoder passwordEncoder;
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
         passwordEncoder = new BCryptPasswordEncoder();
+        // Atualizado para injetar os 4 parâmetros exigidos pelo novo construtor
         authService = new AuthService(
                 usuarioRepository,
-                passwordEncoder
+                passwordEncoder,
+                authenticationManager,
+                jwtTokenProvider
         );
     }
 
@@ -153,5 +172,87 @@ class AuthServiceTest {
         dto.setConfirmarSenha(confirmarSenha);
 
         return dto;
+    }
+
+    @Test
+    void deveAutenticarComSucessoERetornarToken() {
+        // Arrange
+        LoginRequestDTO loginDTO = new LoginRequestDTO("maria@escola.edu.br", "SenhaForte123");
+
+        Usuario usuario = new Usuario();
+        usuario.setId(1L);
+        usuario.setNomeCompleto("Maria Silva");
+        usuario.setEmail("maria@escola.edu.br");
+        usuario.setPerfil(PerfilUsuario.COMUM);
+        usuario.setAtivo(true);
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                loginDTO.getEmail(), loginDTO.getSenha()
+        );
+
+        when(usuarioRepository.findByEmail(loginDTO.getEmail())).thenReturn(Optional.of(usuario));
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(authentication);
+        when(jwtTokenProvider.gerarToken(authentication)).thenReturn("token.jwt.mockado");
+
+        // Act
+        TokenResponseDTO response = authService.autenticar(loginDTO);
+
+        // Assert
+        assertEquals("token.jwt.mockado", response.getToken());
+        assertEquals("Bearer", response.getTipo());
+        assertEquals(3600L, response.getExpiraEm());
+        assertEquals(1L, response.getUsuario().getId());
+        assertEquals("Maria Silva", response.getUsuario().getNomeCompleto());
+        assertEquals("maria@escola.edu.br", response.getUsuario().getEmail());
+        assertEquals(PerfilUsuario.COMUM, response.getUsuario().getPerfil());
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoUsuarioNaoExistir() {
+        // Arrange
+        LoginRequestDTO loginDTO = new LoginRequestDTO("inexistente@escola.edu.br", "senha123");
+
+        when(usuarioRepository.findByEmail(loginDTO.getEmail())).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(BadCredentialsException.class, () -> authService.autenticar(loginDTO));
+        verify(authenticationManager, never()).authenticate(any());
+        verify(jwtTokenProvider, never()).gerarToken(any());
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoUsuarioEstiverInativo() {
+        // Arrange
+        LoginRequestDTO loginDTO = new LoginRequestDTO("maria@escola.edu.br", "SenhaForte123");
+
+        Usuario usuario = new Usuario();
+        usuario.setEmail("maria@escola.edu.br");
+        usuario.setAtivo(false); // Usuário inativo
+
+        when(usuarioRepository.findByEmail(loginDTO.getEmail())).thenReturn(Optional.of(usuario));
+
+        // Act & Assert
+        assertThrows(DisabledException.class, () -> authService.autenticar(loginDTO));
+        verify(authenticationManager, never()).authenticate(any());
+        verify(jwtTokenProvider, never()).gerarToken(any());
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoSenhaEstiverIncorreta() {
+        // Arrange
+        LoginRequestDTO loginDTO = new LoginRequestDTO("maria@escola.edu.br", "SenhaErrada");
+
+        Usuario usuario = new Usuario();
+        usuario.setEmail("maria@escola.edu.br");
+        usuario.setAtivo(true);
+
+        when(usuarioRepository.findByEmail(loginDTO.getEmail())).thenReturn(Optional.of(usuario));
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+
+        // Act & Assert
+        assertThrows(BadCredentialsException.class, () -> authService.autenticar(loginDTO));
+        verify(jwtTokenProvider, never()).gerarToken(any());
     }
 }
