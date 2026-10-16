@@ -13,6 +13,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.edu.escola.agendamento.dto.LoginRequestDTO;
+import br.edu.escola.agendamento.dto.TokenResponseDTO;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -38,4 +45,13 @@ public class AuthController {
                 .status(HttpStatus.CREATED)
                 .body(response);
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<TokenResponseDTO>> login(@RequestBody @Valid LoginRequestDTO dto) {
+        TokenResponseDTO token = authService.autenticar(dto);
+
+        return ResponseEntity.ok(ApiResponse.ok(token, "Login realizado com sucesso."));
+    }
+
+
 }
