@@ -50,8 +50,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<TokenResponseDTO>> login(@RequestBody @Valid LoginRequestDTO dto) {
         TokenResponseDTO token = authService.autenticar(dto);
 
-        // Assumindo a assinatura do seu ApiResponse.ok() baseada no contrato JSON do card
-        return ResponseEntity.ok(ApiResponse.ok("Login realizado com sucesso.", token));
+        return ResponseEntity.ok(ApiResponse.ok(token, "Login realizado com sucesso."));
     }
 
 
