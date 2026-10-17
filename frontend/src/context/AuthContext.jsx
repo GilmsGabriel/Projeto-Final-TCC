@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { loginFake } from "../mocks/loginMock";
+import api from "../api/api";
 import { AuthContext } from "./authContext";
 
 export function AuthProvider({ children }) {
@@ -10,13 +10,17 @@ export function AuthProvider({ children }) {
   });
 
   async function login(email, senha) {
-    const { data } = await loginFake(email, senha);
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("usuario", JSON.stringify(data.usuario));
-    setToken(data.token);
-    setUsuario(data.usuario);
+    const response = await api.post("/api/auth/login", { email, senha });
+    
+    // Desestrutura o envelope ApiResponse retornado pelo Spring Boot
+    const { token: novoToken, usuario: novoUsuario } = response.data.dados;
 
-    return data.usuario;
+    localStorage.setItem("token", novoToken);
+    localStorage.setItem("usuario", JSON.stringify(novoUsuario));
+    setToken(novoToken);
+    setUsuario(novoUsuario);
+
+    return novoUsuario;
   }
 
   function logout() {
