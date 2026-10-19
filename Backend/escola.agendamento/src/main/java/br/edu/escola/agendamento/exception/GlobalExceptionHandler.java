@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.time.Instant;
@@ -139,6 +140,21 @@ public class GlobalExceptionHandler {
         );
         
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ApiErrorResponse> handleDisabledException(
+            DisabledException e
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                false,
+                e.getMessage(),
+                "USUARIO_INATIVO",
+                List.of(),
+                Instant.now()
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
 

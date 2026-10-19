@@ -148,14 +148,13 @@ class AuthControllerTest {
     }
 
     @Test
-    void deveRetornar401QuandoCredenciaisForemInvalidas() throws Exception {
+    void deveRetornar401ComJsonDeErroQuandoCredenciaisForemInvalidas() throws Exception {
         when(authService.autenticar(any(LoginRequestDTO.class)))
-                .thenThrow(new BadCredentialsException("Credenciais inválidas"));
-
-        when(authenticationManager.authenticate(any()))
-                .thenThrow(new org.springframework.security.authentication.BadCredentialsException("Credenciais inválidas"));
+                .thenThrow(new BadCredentialsException("Credenciais inválidas."));
 
         mockMvc.perform(post("/api/auth/login")
+                        .with(user("teste").roles("USER"))
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -163,6 +162,36 @@ class AuthControllerTest {
                                     "senha": "senhaErrada"
                                 }
                                 """))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.sucesso").value(false))
+                .andExpect(jsonPath("$.mensagem")
+                        .value("Falha na autenticação: E-mail ou senha incorretos."))
+                .andExpect(jsonPath("$.codigoErro").value("ERRO_CREDENCIAIS"))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    void deveRetornar403ComJsonDeErroQuandoUsuarioEstiverInativo() throws Exception {
+        when(authService.autenticar(any(LoginRequestDTO.class)))
+                .thenThrow(new org.springframework.security.authentication.DisabledException(
+                        "Usuário inativo não pode autenticar."
+                ));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .with(user("teste").roles("USER"))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "email": "inativo@escola.com",
+                                    "senha": "SenhaForte123"
+                                }
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.sucesso").value(false))
+                .andExpect(jsonPath("$.mensagem")
+                        .value("Usuário inativo não pode autenticar."))
+                .andExpect(jsonPath("$.codigoErro").value("USUARIO_INATIVO"))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 }

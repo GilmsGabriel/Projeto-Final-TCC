@@ -29,7 +29,7 @@ export default function RegistroPage() {
         state: { mensagemSucesso: "Cadastro realizado com sucesso. Entre na sua conta." },
       });
     } catch (error) {
-      setErro(error.response?.data?.message || "Não foi possível realizar o cadastro. Tente novamente.");
+      setErro(error.response?.data?.mensagem || "Não foi possível realizar o cadastro. Tente novamente.");
     } finally {
       setLoading(false);
     }

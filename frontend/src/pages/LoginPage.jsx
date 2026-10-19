@@ -21,8 +21,8 @@ export default function LoginPage() {
     try {
       await login(email, senha);
       navigate("/agendamentos");
-    } catch {
-      setErro("E-mail ou senha inválidos. Confira os dados e tente novamente.");
+    } catch (error) {
+      setErro(error.response?.data?.mensagem ||"E-mail ou senha inválidos. Confira os dados e tente novamente.");
     } finally {
       setLoading(false);
     }
