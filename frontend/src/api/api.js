@@ -2,7 +2,6 @@ import axios, { AxiosError } from "axios";
 import { meusAgendamentosFake } from "../mocks/agendamentosMock";
 import { calendarioFake } from "../mocks/calendarioMock";
 import { pendentesFake, aprovarFake, rejeitarFake } from "../mocks/adminMock";
-import { logsAuditoriaFake } from "../mocks/logsAuditoriaMock";
 
 const api = axios.create({
   baseURL: "http://localhost:8080",
@@ -15,7 +14,6 @@ function rotaMockada(config) {
   if (config.method === "get" && config.url === "/api/agendamentos/meus") return "meus";
   if (config.method === "get" && config.url === "/api/agendamentos/calendario") return "calendario";
   if (config.method === "get" && config.url === "/api/admin/agendamentos/pendentes") return "pendentes";
-  if (config.method === "get" && config.url === "/api/admin/logs") return "logsAuditoria";
   if (config.method === "put" && REGEX_APROVAR.test(config.url)) return "aprovar";
   if (config.method === "put" && REGEX_REJEITAR.test(config.url)) return "rejeitar";
   return null;
@@ -48,9 +46,6 @@ api.interceptors.request.use((config) => {
           }
           case "pendentes":
             data = pendentesFake();
-            break;
-          case "logsAuditoria":
-            data = logsAuditoriaFake();
             break;
           case "aprovar": {
             const [, id] = mockConfig.url.match(REGEX_APROVAR);
