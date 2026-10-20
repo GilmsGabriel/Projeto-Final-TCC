@@ -27,8 +27,7 @@ export default function FormularioAgendamento() {
     setSucesso("");
 
     if (!agendamentoCriado) {
-      const diaSemana = new Date(`${dataEvento}T00:00:00`).getDay();
-      if (!dataEvento || (diaSemana !== 0 && diaSemana !== 6)) {
+      if (!dataEvento) {
         setErro("Selecione um sábado ou domingo disponível no calendário.");
         return;
       }
@@ -47,7 +46,7 @@ export default function FormularioAgendamento() {
           dataEvento,
           descricaoEvento: descricaoEvento.trim(),
         });
-        id = data.id;
+        id = data.dados.id;
         setAgendamentoCriado(id);
         setAtualizacaoCalendario((atual) => atual + 1);
       }
@@ -67,7 +66,7 @@ export default function FormularioAgendamento() {
       setAgendamentoCriado(null);
       formulario.reset();
     } catch (error) {
-      const mensagem = error.response?.data?.message || "Não foi possível concluir a solicitação. Tente novamente.";
+      const mensagem = error.response?.data?.mensagem || "Não foi possível concluir a solicitação. Tente novamente.";
       setErro(id ? `Agendamento criado, mas o anexo não foi enviado. ${mensagem}` : mensagem);
     } finally {
       setLoading(false);
