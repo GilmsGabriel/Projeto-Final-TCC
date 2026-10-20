@@ -11,8 +11,6 @@ export function AuthProvider({ children }) {
 
   async function login(email, senha) {
     const response = await api.post("/api/auth/login", { email, senha });
-    
-    // Desestrutura o envelope ApiResponse retornado pelo Spring Boot
     const { token: novoToken, usuario: novoUsuario } = response.data.dados;
 
     localStorage.setItem("token", novoToken);
@@ -23,6 +21,17 @@ export function AuthProvider({ children }) {
     return novoUsuario;
   }
 
+  async function registrar({ nomeCompleto, email, senha, confirmarSenha }) {
+    const response = await api.post("/api/auth/registrar", {
+      nomeCompleto,
+      email,
+      senha,
+      confirmarSenha,
+    });
+
+    return response.data.dados;
+  }
+
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("usuario");
@@ -31,7 +40,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ token, usuario, login, logout }}>
+    <AuthContext.Provider value={{ token, usuario, login, registrar, logout }}>
       {children}
     </AuthContext.Provider>
   );
