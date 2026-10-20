@@ -1,5 +1,5 @@
 import axios, { AxiosError } from "axios";
-import { meusAgendamentosFake, criarAgendamentoFake, enviarAnexoFake } from "../mocks/agendamentosMock";
+import { meusAgendamentosFake } from "../mocks/agendamentosMock";
 import { calendarioFake } from "../mocks/calendarioMock";
 import { pendentesFake, aprovarFake, rejeitarFake } from "../mocks/adminMock";
 import { logsAuditoriaFake } from "../mocks/logsAuditoriaMock";
@@ -8,13 +8,10 @@ const api = axios.create({
   baseURL: "http://localhost:8080",
 });
 
-const REGEX_ANEXO = /^\/api\/agendamentos\/(\d+)\/anexo$/;
 const REGEX_APROVAR = /^\/api\/admin\/agendamentos\/(\d+)\/aprovar$/;
 const REGEX_REJEITAR = /^\/api\/admin\/agendamentos\/(\d+)\/rejeitar$/;
 
 function rotaMockada(config) {
-  if (config.method === "post" && config.url === "/api/agendamentos") return "criarAgendamento";
-  if (config.method === "post" && REGEX_ANEXO.test(config.url)) return "enviarAnexo";
   if (config.method === "get" && config.url === "/api/agendamentos/meus") return "meus";
   if (config.method === "get" && config.url === "/api/agendamentos/calendario") return "calendario";
   if (config.method === "get" && config.url === "/api/admin/agendamentos/pendentes") return "pendentes";
@@ -41,15 +38,6 @@ api.interceptors.request.use((config) => {
         let status = 200;
 
         switch (rota) {
-          case "criarAgendamento":
-            data = criarAgendamentoFake(JSON.parse(mockConfig.data), JSON.parse(localStorage.getItem("usuario")));
-            status = 201;
-            break;
-          case "enviarAnexo": {
-            const [, id] = mockConfig.url.match(REGEX_ANEXO);
-            data = enviarAnexoFake(id, mockConfig.data);
-            break;
-          }
           case "meus":
             data = meusAgendamentosFake(JSON.parse(localStorage.getItem("usuario"))?.id);
             break;
