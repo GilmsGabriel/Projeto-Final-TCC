@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../api/api";
+import { useAuth } from "../hooks/useAuth";
 import "./LoginPage.css";
 
 export default function RegistroPage() {
@@ -10,6 +10,7 @@ export default function RegistroPage() {
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
+  const { registrar } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(event) {
@@ -24,7 +25,7 @@ export default function RegistroPage() {
 
     setLoading(true);
     try {
-      await api.post("/api/auth/registrar", { nomeCompleto, email, senha, confirmarSenha });
+      await registrar({ nomeCompleto, email, senha, confirmarSenha });
       navigate("/login", {
         state: { mensagemSucesso: "Cadastro realizado com sucesso. Entre na sua conta." },
       });
