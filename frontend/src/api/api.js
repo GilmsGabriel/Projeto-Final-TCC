@@ -1,6 +1,5 @@
 import axios, { AxiosError } from "axios";
 import { meusAgendamentosFake } from "../mocks/agendamentosMock";
-import { calendarioFake } from "../mocks/calendarioMock";
 import { pendentesFake, aprovarFake, rejeitarFake } from "../mocks/adminMock";
 import { logsAuditoriaFake } from "../mocks/logsAuditoriaMock";
 
@@ -13,7 +12,6 @@ const REGEX_REJEITAR = /^\/api\/admin\/agendamentos\/(\d+)\/rejeitar$/;
 
 function rotaMockada(config) {
   if (config.method === "get" && config.url === "/api/agendamentos/meus") return "meus";
-  if (config.method === "get" && config.url === "/api/agendamentos/calendario") return "calendario";
   if (config.method === "get" && config.url === "/api/admin/agendamentos/pendentes") return "pendentes";
   if (config.method === "get" && config.url === "/api/admin/logs") return "logsAuditoria";
   if (config.method === "put" && REGEX_APROVAR.test(config.url)) return "aprovar";
@@ -41,11 +39,6 @@ api.interceptors.request.use((config) => {
           case "meus":
             data = meusAgendamentosFake(JSON.parse(localStorage.getItem("usuario"))?.id);
             break;
-          case "calendario": {
-            const { mes, ano } = mockConfig.params || {};
-            data = calendarioFake(Number(mes), Number(ano));
-            break;
-          }
           case "pendentes":
             data = pendentesFake();
             break;

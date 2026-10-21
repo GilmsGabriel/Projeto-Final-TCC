@@ -7,18 +7,27 @@ const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 export default function CalendarioDisponibilidade({ mes, ano, dataSelecionada, onSelecionarData }) {
   const [registros, setRegistros] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
     let cancelado = false;
 
     async function carregarCalendario() {
       setCarregando(true);
-      const { data } = await api.get("/api/agendamentos/calendario", {
-        params: { mes, ano },
-      });
-      if (!cancelado) {
-        setRegistros(data);
-        setCarregando(false);
+      setErro("");
+      try {
+        const { data } = await api.get("/api/agendamentos/calendario", {
+          params: { mes, ano },
+        });
+        if (!cancelado) {
+          setRegistros(Array.isArray(data?.dados) ? data.dados : []);
+          setCarregando(false);
+        }
+      } catch {
+        if (!cancelado) {
+          setErro("Não foi possível carregar o calendário. Tente novamente.");
+          setCarregando(false);
+        }
       }
     }
 
@@ -44,6 +53,14 @@ export default function CalendarioDisponibilidade({ mes, ano, dataSelecionada, o
   const dias = Array.from({ length: diasNoMes }, (_, i) => i + 1);
 
   if (carregando) return <p>Carregando calendário...</p>;
+
+  if (erro) {
+    return (
+      <div className="calendario">
+        <p className="calendario-erro" role="alert">{erro}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="calendario">
