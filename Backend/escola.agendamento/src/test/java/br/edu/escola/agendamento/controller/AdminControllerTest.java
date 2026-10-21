@@ -340,4 +340,91 @@ class AdminControllerTest {
         );
     }
 
+    @Test
+    void administradorDeveAprovarAgendamento() throws Exception {
+        String emailAdmin = "admin@escola.edu.br";
+
+        UserDetails administrador = User
+                .withUsername(emailAdmin)
+                .password("senha")
+                .authorities("ROLE_ADMINISTRADOR")
+                .build();
+
+        when(customUserDetailsService.loadUserByUsername(emailAdmin))
+                .thenReturn(administrador);
+
+        UsuarioResponseDTO perfilAdmin = new UsuarioResponseDTO();
+        perfilAdmin.setId(2L);
+
+        when(usuarioService.buscarPerfilLogado(emailAdmin))
+                .thenReturn(perfilAdmin);
+
+        AgendamentoResponseDTO resultado = new AgendamentoResponseDTO();
+        resultado.setId(7L);
+        resultado.setStatus(StatusAgendamento.APROVADO);
+        resultado.setDataAtualizacao(
+                LocalDateTime.of(2026, 10, 20, 15, 30)
+        );
+
+        when(agendamentoService.aprovarAgendamento(7L, 2L))
+                .thenReturn(resultado);
+
+        String token = gerarToken(administrador);
+
+        mockMvc.perform(put("/api/admin/agendamentos/7/aprovar")
+                        .header(
+                                HttpHeaders.AUTHORIZATION,
+                                "Bearer " + token
+                        ))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sucesso").value(true))
+                .andExpect(jsonPath("$.mensagem")
+                        .value("Agendamento aprovado com sucesso."))
+                .andExpect(jsonPath("$.dados.id").value(7))
+                .andExpect(jsonPath("$.dados.status").value("APROVADO"))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+        verify(agendamentoService).aprovarAgendamento(7L, 2L);
+    }
+
+    @Test
+    void deveRetornar422QuandoJustificativaEstiverEmBranco() throws Exception {
+        String emailAdmin = "admin@escola.edu.br";
+
+        UserDetails administrador = User
+                .withUsername(emailAdmin)
+                .password("senha")
+                .authorities("ROLE_ADMINISTRADOR")
+                .build();
+
+        when(customUserDetailsService.loadUserByUsername(emailAdmin))
+                .thenReturn(administrador);
+
+        String token = gerarToken(administrador);
+
+        mockMvc.perform(put("/api/admin/agendamentos/1/rejeitar")
+                        .header(
+                                HttpHeaders.AUTHORIZATION,
+                                "Bearer " + token
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "justificativa": "   "
+                            }
+                            """))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.sucesso").value(false))
+                .andExpect(jsonPath("$.mensagem").value("Erro de validação."))
+                .andExpect(jsonPath("$.codigoErro").value("VALIDACAO_ERRO"))
+                .andExpect(jsonPath("$.detalhes[0]")
+                        .value("justificativa: A justificativa da rejeição é obrigatória."));
+
+        verify(agendamentoService, never()).rejeitarAgendamento(
+                any(Long.class),
+                any(Long.class),
+                any(RejeicaoRequestDTO.class)
+        );
+    }
+
 }
