@@ -16,9 +16,13 @@ export default function DashboardAdminPage() {
       setCarregando(true);
       try {
         const { data } = await api.get("/api/admin/agendamentos/pendentes");
-        if (!cancelado) setSolicitacoes(data);
-      } catch {
-        if (!cancelado) setErro("Não foi possível carregar as solicitações.");
+        if (!cancelado) {
+          setSolicitacoes(Array.isArray(data?.dados) ? data.dados : []);
+        }
+      } catch (error) {
+        if (!cancelado) {
+          setErro(error.response?.data?.mensagem|| "Não foi possível carregar as solicitações.");
+        }
       } finally {
         if (!cancelado) setCarregando(false);
       }
