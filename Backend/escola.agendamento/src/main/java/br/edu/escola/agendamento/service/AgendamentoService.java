@@ -17,6 +17,7 @@ import br.edu.escola.agendamento.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import br.edu.escola.agendamento.service.LogAuditoriaService;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -67,6 +68,14 @@ public class AgendamentoService {
         agendamento.setStatus(StatusAgendamento.PENDENTE);
 
         Agendamento salvo = agendamentoRepository.save(agendamento);
+
+        logAuditoriaService.registrarEvento(
+                salvo.getUsuario(),
+                "CRIACAO_AGENDAMENTO",
+                "Agendamento#" + salvo.getId(),
+                "Solicitação de agendamento criada para "
+                        + salvo.getDataEvento()
+        );
 
         AgendamentoResponseDTO response = converterParaResponseDTO(salvo);
 
