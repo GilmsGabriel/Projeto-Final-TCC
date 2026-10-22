@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import br.edu.escola.agendamento.service.LogAuditoriaService;
 
 @Service
 public class AuthService {
@@ -25,17 +26,20 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final LogAuditoriaService logAuditoriaService;
 
     public AuthService(
             UsuarioRepository usuarioRepository,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
-            JwtTokenProvider jwtTokenProvider
+            JwtTokenProvider jwtTokenProvider,
+            LogAuditoriaService logAuditoriaService
     ) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.logAuditoriaService = logAuditoriaService;
     }
 
     public TokenResponseDTO autenticar(LoginRequestDTO dto) {
@@ -128,6 +132,13 @@ public class AuthService {
         usuario.setAtivo(true);
 
         Usuario usuarioSalvo = usuarioRepository.save(usuario);
+
+        logAuditoriaService.registrarEvento(
+                usuarioSalvo,
+                "REGISTRO_USUARIO",
+                "Usuario#" + usuarioSalvo.getId(),
+                "Novo usuário cadastrado: " + usuarioSalvo.getEmail()
+        );
 
         UsuarioResponseDTO response = new UsuarioResponseDTO();
 
