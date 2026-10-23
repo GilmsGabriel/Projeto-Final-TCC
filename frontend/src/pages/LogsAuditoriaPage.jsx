@@ -26,11 +26,11 @@ export default function LogsAuditoriaPage() {
       try {
         const { data } = await api.get("/api/admin/logs");
         if (!cancelado) {
-          setLogs([...data].sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime()));
+          setLogs([...data.dados].sort((a, b) => new Date(b.dataHora).getTime() - new Date(a.dataHora).getTime()));
         }
       } catch (error) {
         if (!cancelado) {
-          setErro(error.response?.data?.message || "Não foi possível carregar os logs de auditoria. Tente novamente mais tarde.");
+          setErro(error.response?.data?.mensagem || "Não foi possível carregar os logs de auditoria. Tente novamente mais tarde.");
         }
       } finally {
         if (!cancelado) setCarregando(false);
@@ -62,15 +62,24 @@ export default function LogsAuditoriaPage() {
                 <th scope="col">Usuário</th>
                 <th scope="col">Ação</th>
                 <th scope="col">Entidade afetada</th>
+                <th scope="col">Detalhes</th>
               </tr>
             </thead>
             <tbody>
               {logs.map((log) => (
                 <tr key={log.id}>
                   <td><time dateTime={log.dataHora}>{formatarDataHora(log.dataHora)}</time></td>
-                  <td>{log.usuario.nomeCompleto}</td>
+                  <td>
+                    {log.usuario ? (
+                      <>
+                        {log.usuario.nomeCompleto}<br />
+                        {log.usuario.email}
+                      </>
+                    ) : "Não informado"}
+                  </td>
                   <td>{log.acao}</td>
-                  <td>{log.entidadeAfetada}</td>
+                  <td>{log.entidadeAfetada ?? "—"}</td>
+                  <td>{log.detalhes ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
