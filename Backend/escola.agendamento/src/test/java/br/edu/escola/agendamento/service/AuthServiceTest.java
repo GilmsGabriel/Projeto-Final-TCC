@@ -22,6 +22,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import br.edu.escola.agendamento.service.LogAuditoriaService;
+import static org.mockito.Mockito.verify;
 
 import java.util.Optional;
 
@@ -48,18 +50,22 @@ class AuthServiceTest {
     @Mock
     private JwtTokenProvider jwtTokenProvider;
 
+    @Mock
+    private LogAuditoriaService logAuditoriaService;
+
     private PasswordEncoder passwordEncoder;
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
         passwordEncoder = new BCryptPasswordEncoder();
-        // Atualizado para injetar os 4 parâmetros exigidos pelo novo construtor
+
         authService = new AuthService(
                 usuarioRepository,
                 passwordEncoder,
                 authenticationManager,
-                jwtTokenProvider
+                jwtTokenProvider,
+                logAuditoriaService
         );
     }
 
@@ -86,6 +92,13 @@ class AuthServiceTest {
                 });
 
         UsuarioResponseDTO response = authService.registrar(dto);
+
+        verify(logAuditoriaService).registrarEvento(
+                org.mockito.ArgumentMatchers.any(Usuario.class),
+                org.mockito.ArgumentMatchers.eq("REGISTRO_USUARIO"),
+                org.mockito.ArgumentMatchers.eq("Usuario#1"),
+                org.mockito.ArgumentMatchers.contains("maria@escola.edu.br")
+        );
 
         ArgumentCaptor<Usuario> captor =
                 ArgumentCaptor.forClass(Usuario.class);

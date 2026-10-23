@@ -54,3 +54,10 @@
   color: #aaa;
   cursor: not-allowed;
 }
+
+.calendario-erro {
+  color: #842029;
+  background-color: #f8d4d4;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
