@@ -14,8 +14,8 @@ export default function CardSolicitacaoPendente({ agendamento, onAprovar, onReje
     setErro(null);
     try {
       await onAprovar(agendamento.id);
-    } catch {
-      setErro("Não foi possível aprovar. Tente novamente.");
+    } catch (error) {
+      setErro(error.response?.data?.mensagem|| "Não foi possível aprovar. Tente novamente.");
       setProcessando(false);
     }
   }
@@ -38,18 +38,18 @@ export default function CardSolicitacaoPendente({ agendamento, onAprovar, onReje
     try {
       await onRejeitar(agendamento.id, justificativa.trim());
       setModalAberto(false);
-    } catch {
-      setErro("Não foi possível rejeitar. Tente novamente.");
+    } catch (error) {
+      setErro(error.response?.data?.mensagem|| "Não foi possível rejeitar. Tente novamente.");
       setProcessando(false);
     }
   }
 
   return (
     <div className="card-solicitacao">
-      <h2>{agendamento.tituloEvento}</h2>
+      <h2>{agendamento.descricaoEvento}</h2>
       <p>Data do evento: {formatarDataBR(agendamento.dataEvento)}</p>
-      {agendamento.solicitante && (
-        <p>Solicitado por: {agendamento.solicitante.nomeCompleto}</p>
+      {agendamento.usuario && (
+        <p>Solicitado por: {agendamento.usuario.nomeCompleto}</p>
       )}
 
       {erro && <p className="card-erro">{erro}</p>}
@@ -95,6 +95,7 @@ export default function CardSolicitacaoPendente({ agendamento, onAprovar, onReje
 }
 
 function formatarDataBR(dataISO) {
+  if (!dataISO) return "";
   const [ano, mes, dia] = dataISO.split("-");
   return `${dia}/${mes}/${ano}`;
 }

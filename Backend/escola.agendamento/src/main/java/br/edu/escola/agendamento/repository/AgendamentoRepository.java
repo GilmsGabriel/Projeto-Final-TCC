@@ -1,7 +1,9 @@
+
 package br.edu.escola.agendamento.repository;
 
 import br.edu.escola.agendamento.entity.Agendamento;
 import br.edu.escola.agendamento.enums.StatusAgendamento;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
@@ -9,8 +11,10 @@ import java.util.List;
 
 public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> {
 
+    @EntityGraph(attributePaths = "usuario")
     List<Agendamento> findByUsuarioId(Long usuarioId);
 
+    @EntityGraph(attributePaths = "usuario")
     List<Agendamento> findByStatus(StatusAgendamento status);
 
     boolean existsByDataEventoAndStatusNot(
