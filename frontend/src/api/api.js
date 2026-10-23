@@ -1,5 +1,4 @@
 import axios, { AxiosError } from "axios";
-import { meusAgendamentosFake } from "../mocks/agendamentosMock";
 import { logsAuditoriaFake } from "../mocks/logsAuditoriaMock";
 
 const api = axios.create({
@@ -7,7 +6,6 @@ const api = axios.create({
 });
 
 function rotaMockada(config) {
-  if (config.method === "get" && config.url === "/api/agendamentos/meus") return "meus";
   if (config.method === "get" && config.url === "/api/admin/logs") return "logsAuditoria";
   return null;
 }
@@ -29,9 +27,6 @@ api.interceptors.request.use((config) => {
         let status = 200;
 
         switch (rota) {
-          case "meus":
-            data = meusAgendamentosFake(JSON.parse(localStorage.getItem("usuario"))?.id);
-            break;
           case "logsAuditoria":
             data = logsAuditoriaFake();
             break;

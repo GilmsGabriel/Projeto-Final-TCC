@@ -14,7 +14,7 @@ export default function MeusAgendamentosPage() {
     async function carregarAgendamentos() {
       try {
         const { data } = await api.get("/api/agendamentos/meus");
-        if (ativo) setAgendamentos(data);
+        if (ativo) setAgendamentos(data.dados);
       } catch {
         if (ativo) setErro("Não foi possível carregar seus agendamentos. Tente novamente mais tarde.");
       } finally {
